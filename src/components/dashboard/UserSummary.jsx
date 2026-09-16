@@ -31,7 +31,14 @@ export default function UserSummary() {
         <StatCard label="إجمالي القيمة" value={fmt(t.totalValue)} suffix="USDT" icon={TrendingUp} accent="gold" />
         <StatCard label="الرصيد المتاح" value={fmt(t.available)} suffix="USDT" icon={Wallet} accent="green" />
         <StatCard label="الأموال المقفلة" value={fmt(t.locked)} suffix="USDT" icon={Lock} accent="cyan" />
-        <StatCard label="الأرباح / العوائد" value={`+${fmt(t.profit)}`} suffix={`(${t.profitPct}%)`} accent="green" hidden={hidden} onToggle={() => setHidden(!hidden)} />
+        <StatCard
+  label="الأرباح / العوائد"
+  value={t.profit > 0 ? `+${fmt(t.profit)}` : fmt(t.profit)}
+  suffix={`(${t.profitPct}%)`}
+  accent="green"
+  hidden={hidden}
+  onToggle={() => setHidden(!hidden)}
+/>
       </div>
     </section>
   );

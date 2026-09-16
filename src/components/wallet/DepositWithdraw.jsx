@@ -231,14 +231,18 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
       {tab === 'withdraw' && (
         <>
           <div className={styles.balanceBox}>
-            <div className={styles.balanceItem}>
-              <span>الرصيد المتاح</span>
-              <b className="mono text-green">{userBalance.available.toLocaleString()} USDT</b>
-            </div>
-            <div className={styles.balanceItem}>
-              <span>قيد السحب</span>
-              <b className="mono">{userBalance.pendingWithdraw.toLocaleString()} USDT</b>
-            </div>
+           <div className={styles.balanceItem}>
+  <span>الرصيد المتاح</span>
+  <b className="mono text-green">
+    {userBalance.available.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+  </b>
+</div>
+<div className={styles.balanceItem}>
+  <span>قيد السحب</span>
+  <b className="mono">
+    {userBalance.pendingWithdraw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
+  </b>
+</div>
             <div className={styles.balanceItem}>
               <span>رسوم السحب</span>
               <b className="mono">{binanceWallet.withdrawFee} USDT</b>

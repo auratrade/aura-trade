@@ -6,16 +6,15 @@ export const user = {
   verified: true,
   avatar: 'AV',
   totals: {
-    totalValue: 924920.50,
-    available: 320150.00,
-    locked: 552770.50,
-    profit: 15420.30,
-    profitPct: 3.45,
-
+    totalValue: 0,
+    available: 0,
+    locked: 0,
+    profit: 0,
+    profitPct: 0,
   },
 };
 
-export const depositBalance = 100;
+export const depositBalance = 0;
 export const MISSION_REWARD_PERCENT = 2; // نسبة الربح لكل مهمة
 
 
@@ -192,18 +191,18 @@ export const missions = [
 export const referral = {
   code: 'AURA-VIP-887',
   link: 'https://aura.trade/ref/AURA-VIP-887',
-  totalReferrals: 38,
+  totalReferrals: 0,
   level: 'المستوى الأول',
   commission: '10%',
-  earnings: 1540.30,
+  earnings: 0,
 };
 
 export const teamStats = {
-  total: 38,
-  thisWeek: 5,
-  level1Profit: 1420.00,
-  level2Profit: 120.30,
-  totalVolume: 52000,
+  total: 0,
+  thisWeek: 0,
+  level1Profit: 0,
+  level2Profit: 0,
+  totalVolume: 0,
   targetVolume: 100000,
   rate: '5%',
   maxRate: '10%',
@@ -227,56 +226,9 @@ export const binanceWallet = {
 };
 
 export const userBalance = {
-  available: 320150.00,
-  locked: 552770.50,
+  available: 0,
+  locked: 0,
   pendingWithdraw: 0,
 };
 
-export const transactions = [
-  {
-    id: 'TX-2026-001',
-    type: 'deposit',
-    amount: 500,
-    network: 'USDT - TRC20',
-    status: 'completed',
-    date: '2026-01-15 14:32',
-    txid: '0xabc123...def456',
-  },
-  {
-    id: 'TX-2026-002',
-    type: 'deposit',
-    amount: 1000,
-    network: 'USDT - TRC20',
-    status: 'pending',
-    date: '2026-01-16 09:15',
-    txid: '0x789ghi...jkl012',
-  },
-  {
-    id: 'TX-2026-003',
-    type: 'withdraw',
-    amount: 200,
-    network: 'USDT - TRC20',
-    status: 'completed',
-    date: '2026-01-14 20:45',
-    address: 'TXyZ...1234',
-  },
-  {
-    id: 'TX-2026-004',
-    type: 'withdraw',
-    amount: 150,
-    network: 'USDT - TRC20',
-    status: 'rejected',
-    date: '2026-01-13 11:22',
-    address: 'TAbc...5678',
-    reason: 'عنوان محفظة غير صالح',
-  },
-  {
-    id: 'TX-2026-005',
-    type: 'withdraw',
-    amount: 300,
-    network: 'USDT - TRC20',
-    status: 'processing',
-    date: '2026-01-16 12:00',
-    address: 'TDef...9012',
-  },
-];
+export const transactions = [];
