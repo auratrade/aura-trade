@@ -1,0 +1,169 @@
+/* Summary */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.summaryItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.summaryIcon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--bg-card-2);
+  color: var(--text-secondary);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.summaryIcon.gold { background: var(--gold-soft); color: var(--gold); }
+.summaryIcon.cyan { background: var(--cyan-soft); color: var(--cyan); }
+
+.summaryLabel { font-size: 10px; color: var(--text-secondary); }
+.summaryValue { font-size: 15px; font-weight: 800; margin-top: 2px; }
+
+/* Progress */
+.progress {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+.progressHead {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+.progressHead b { color: var(--gold); }
+.progressBar {
+  height: 6px;
+  background: var(--bg-card-2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--orange));
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+/* List */
+.list { display: flex; flex-direction: column; gap: 8px; }
+.item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 14px;
+  transition: all 0.2s;
+}
+.item:hover:not(.done) {
+  border-color: var(--gold);
+  transform: translateX(-3px);
+}
+.done { opacity: 0.65; }
+
+.iconWrap {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: var(--gold-soft);
+  color: var(--gold);
+  display: grid; place-items: center;
+  flex-shrink: 0;
+}
+.iconDone {
+  background: var(--green-soft);
+  color: var(--green);
+}
+
+.content { flex: 1; min-width: 0; }
+.titleRow { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.title { font-size: 13px; font-weight: 700; }
+.symbol {
+  font-size: 10px;
+  padding: 2px 8px;
+  background: var(--bg-card-2);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+.reward {
+  display: flex; align-items: center; gap: 4px;
+  color: var(--green);
+  font-weight: 700;
+}
+.meta { display: flex; align-items: center; gap: 4px; }
+.metaDot { color: var(--text-muted); }
+
+.action { flex-shrink: 0; }
+.statusDone {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px;
+  color: var(--green);
+  background: var(--green-soft);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+.startBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 9px 16px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  color: #0a0f1c;
+  font-size: 12px;
+  font-weight: 800;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.startBtn:hover {
+  box-shadow: 0 0 20px rgba(245, 176, 65, 0.4);
+  transform: translateY(-1px);
+}
+
+/* All Done */
+.allDone {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(22, 199, 132, 0.15), rgba(22, 199, 132, 0.05));
+  border: 1px solid rgba(22, 199, 132, 0.3);
+  border-radius: var(--radius);
+  margin-top: 12px;
+  color: var(--green);
+}
+.allDone b { display: block; font-size: 13px; color: var(--text-primary); }
+.allDone span { font-size: 11px; color: var(--text-secondary); }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .summary { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .summary { grid-template-columns: 1fr; }
+  .item { flex-wrap: wrap; }
+  .action { width: 100%; }
+  .startBtn { width: 100%; justify-content: center; }
+}

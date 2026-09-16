@@ -1,0 +1,98 @@
+.wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+}
+
+.head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+  flex-wrap: wrap; gap: 12px;
+}
+.title { font-size: 14px; font-weight: 700; }
+
+.filters { display: flex; gap: 6px; background: var(--bg-card-2); padding: 4px; border-radius: 10px; }
+.filterBtn {
+  font-size: 11px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.filterActive { background: var(--gold); color: #0a0f1c; }
+
+.tableWrap { overflow-x: auto; }
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  min-width: 700px;
+}
+.table thead th {
+  text-align: right;
+  padding: 10px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-card-2);
+}
+.table tbody td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+.table tbody tr:last-child td { border-bottom: none; }
+.table tbody tr:hover { background: var(--bg-card-2); }
+
+.type {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.dep { background: var(--green-soft); color: var(--green); }
+.wd { background: var(--red-soft); color: var(--red); }
+
+.amount { font-weight: 700; }
+.network { color: var(--text-secondary); font-size: 11px; }
+.date { color: var(--text-secondary); font-size: 11px; }
+
+.status {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+}
+.pending { background: var(--gold-soft); color: var(--gold); }
+.processing { background: var(--cyan-soft); color: var(--cyan); }
+.completed { background: var(--green-soft); color: var(--green); }
+.rejected { background: var(--red-soft); color: var(--red); }
+
+.hash {
+  font-size: 10px;
+  color: var(--text-muted);
+  max-width: 140px;
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.empty {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  gap: 10px;
+}
+.empty p { font-size: 12px; }
+
+@media (max-width: 640px) {
+  .head { flex-direction: column; align-items: stretch; }
+  .filters { justify-content: space-between; }
+}

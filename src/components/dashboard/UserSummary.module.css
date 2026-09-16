@@ -1,0 +1,82 @@
+.wrap { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
+
+.profile {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+}
+.avatar {
+  width: 48px; height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1e3a8a, #0e7490);
+  display: grid; place-items: center;
+  font-weight: 800; font-size: 16px; color: #fff;
+  flex-shrink: 0;
+}
+.info { flex: 1; }
+.nameRow { display: flex; align-items: center; gap: 8px; }
+.name { font-size: 16px; font-weight: 700; }
+.verified {
+  font-size: 10px;
+  background: var(--green-soft);
+  color: var(--green);
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.meta { display: flex; gap: 8px; font-size: 11px; color: var(--text-secondary); margin-top: 4px; flex-wrap: wrap; }
+.meta b { color: var(--text-primary); font-weight: 600; }
+.dot { color: var(--text-muted); }
+
+.modeBtn {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px;
+  padding: 8px 12px;
+  border-radius: 20px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  overflow: hidden;
+}
+.cardHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.cardLabel { font-size: 11px; color: var(--text-secondary); }
+.cardIcon { color: var(--text-muted); }
+.cardValue { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.suffix { font-size: 11px; color: var(--text-secondary); font-weight: 500; margin-right: 4px; }
+
+.toggle {
+  position: absolute;
+  top: 12px; left: 12px;
+  color: var(--text-muted);
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 6px;
+}
+.toggle:hover { background: var(--bg-card-2); }
+
+.accent_gold { border-color: rgba(245,176,65,0.2); }
+.accent_gold .cardValue { color: var(--gold); }
+.accent_green .cardValue { color: var(--green); }
+.accent_cyan .cardValue { color: var(--cyan); }
+
+@media (max-width: 900px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .profile { flex-wrap: wrap; }
+  .modeBtn { display: none; }
+}

@@ -1,0 +1,45 @@
+.wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.title { font-size: 13px; font-weight: 700; }
+.mode { font-size: 10px; color: var(--text-secondary); }
+
+.columns {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 6px 4px;
+}
+
+.rows { display: flex; flex-direction: column; font-size: 11px; }
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr;
+  padding: 4px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar { position: absolute; top: 0; right: 0; height: 100%; z-index: 0; }
+.row > span:not(.bar) { position: relative; z-index: 1; }
+.sellRow .bar { background: rgba(234, 57, 67, 0.08); }
+.buyRow .bar { background: rgba(22, 199, 132, 0.08); }
+
+.currentPrice {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 4px;
+  margin: 6px 0;
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 15px;
+  font-weight: 700;
+}
+.currentPrice span:last-child { font-size: 11px; }

@@ -1,0 +1,83 @@
+.wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--bg-card-2); padding: 4px; border-radius: 10px; }
+.tab {
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+.buyTab { background: var(--green); color: #04140c; }
+.sellTab { background: var(--red); color: #fff; }
+
+.typeRow { display: flex; align-items: center; gap: 6px; }
+.typeBtn {
+  font-size: 11px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+.typeActive { background: var(--bg-card-2); color: var(--text-primary); }
+.balance { margin-right: auto; font-size: 10px; color: var(--text-secondary); }
+.balance b { color: var(--text-primary); }
+
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field > span { font-size: 11px; color: var(--text-secondary); }
+.inputWrap {
+  display: flex; align-items: center;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 0 10px;
+  transition: border 0.2s;
+}
+.inputWrap:focus-within { border-color: var(--gold); }
+.input {
+  flex: 1; padding: 10px 0;
+  background: transparent; border: none; outline: none;
+  font-size: 13px; font-weight: 600;
+}
+.suffix { font-size: 11px; color: var(--text-secondary); }
+
+.pcts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.pctBtn {
+  font-size: 11px;
+  padding: 6px;
+  border-radius: 6px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.pctBtn:hover { color: var(--text-primary); }
+.pctActive { border-color: var(--gold); color: var(--gold); }
+
+.totalRow {
+  display: flex; justify-content: space-between;
+  font-size: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+}
+.totalRow b { color: var(--text-primary); }
+
+.submit {
+  padding: 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+.buyBtn { background: var(--green); color: #04140c; }
+.buyBtn:hover { box-shadow: 0 0 20px rgba(22, 199, 132, 0.35); }
+.sellBtn { background: var(--red); color: #fff; }
+.sellBtn:hover { box-shadow: 0 0 20px rgba(234, 57, 67, 0.35); }
