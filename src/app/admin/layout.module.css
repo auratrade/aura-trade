@@ -1,0 +1,28 @@
+.wrap {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  direction: rtl;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.content {
+  flex: 1;
+  padding: 24px;
+  overflow-x: hidden;
+}
+
+@media (max-width: 900px) {
+  .wrap {
+    flex-direction: column;
+  }
+  .content {
+    padding: 16px;
+  }
+}

@@ -2,7 +2,6 @@ export const user = {
   name: 'Alexander Vance',
   userId: 'AV-882701',
   joinedAt: '2024-03-15',
-  level: 'VIP 2',
   verified: true,
   avatar: 'AV',
   totals: {
@@ -13,6 +12,46 @@ export const user = {
     profitPct: 0,
   },
 };
+
+
+export const LEVELS = [
+  {
+    key: 'starter',
+    name: 'مبتدئ',
+    levelNumber: 0,
+    minReferrals: 0,
+    commission: 5,
+    color: '#7d8aab',
+    icon: 'user',
+  },
+  {
+    key: 'vip1',
+    name: 'VIP 1',
+    levelNumber: 1,
+    minReferrals: 5,
+    commission: 10,
+    color: '#cd7f32', // برونزي
+    icon: 'crown',
+  },
+  {
+    key: 'vip2',
+    name: 'VIP 2',
+    levelNumber: 2,
+    minReferrals: 30,
+    commission: 15,
+    color: '#c0c0c0', // فضي
+    icon: 'crown',
+  },
+  {
+    key: 'vip3',
+    name: 'VIP 3',
+    levelNumber: 3,
+    minReferrals: 100,
+    commission: 20,
+    color: '#f5b041', // ذهبي
+    icon: 'crown',
+  },
+];
 
 export const depositBalance = 0;
 export const MISSION_REWARD_PERCENT = 2; // نسبة الربح لكل مهمة
@@ -191,8 +230,7 @@ export const missions = [
 export const referral = {
   code: 'AURA-VIP-887',
   link: 'https://aura.trade/ref/AURA-VIP-887',
-  totalReferrals: 0,
-  level: 'المستوى الأول',
+  totalReferrals: 0, // ← غيّر هذا الرقم لتجربة المستويات
   commission: '10%',
   earnings: 0,
 };
@@ -215,14 +253,107 @@ export const securityStatus = [
 ];
 
 // ========== WALLET (Binance Manual) ==========
+// ============================================================
+//                    WALLET (Binance)
+// ============================================================
 export const binanceWallet = {
-  network: 'USDT - TRC20',
-  address: 'TQn9Y2khEsLJW1ChVWFMSMeRDow5KcbLSE',
-  label: 'محفظة المنصة الرسمية على Binance',
+  // الشبكة الافتراضية
+  defaultNetwork: 'BEP20',
+
   minDeposit: 10,
   minWithdraw: 20,
   withdrawFee: 1,
-  warning: 'يجب إرسال USDT على شبكة TRC20 فقط. أي شبكة أخرى تعني فقدان الأموال.',
+
+  warning: 'يجب إرسال USDT على الشبكة المختارة فقط. أي شبكة أخرى تعني فقدان الأموال.',
+
+  // ============ الشبكات المدعومة ============
+  networks: [
+    {
+      key: 'BEP20',
+      name: 'BNB Smart Chain',
+      nameAr: 'شبكة BSC (BEP20)',
+      symbol: 'USDT',
+      address: '0xb85d38cd5274e92fed17728e644cb21ddb038fb6',
+      color: '#f5b041',
+      icon: '🟡',
+      recommended: true,
+      warning: 'الأسرع والأرخص — يُنصح بها',
+    },
+    {
+      key: 'TRC20',
+      name: 'Tron',
+      nameAr: 'شبكة ترون (TRC20)',
+      symbol: 'USDT',
+      address: 'TDEtGUSbWXRgvudC7z65KsaifhVNQk5JrR',
+      color: '#ea3943',
+      icon: '🔴',
+      recommended: false,
+      warning: 'رسوم منخفضة — شائعة',
+    },
+    {
+      key: 'ERC20',
+      name: 'Ethereum',
+      nameAr: 'شبكة إيثريوم (ERC20)',
+      symbol: 'USDT',
+      address: '0xb85d38cd5274e92fed17728e644cb21ddb038fb6',
+      color: '#7d8aab',
+      icon: '⚪',
+      recommended: false,
+      warning: 'رسوم عالية — استخدمها فقط للضرورة',
+    },
+    {
+      key: 'TON',
+      name: 'The Open Network',
+      nameAr: 'شبكة TON',
+      symbol: 'USDT',
+      address: 'UQBhqLfx0Zg-p4lvn-ViBgKIrwxOCYtQPNGbUOGeQEtfFHzm',
+      color: '#22d3ee',
+      icon: '🔵',
+      recommended: false,
+      warning: 'شبكة تيليجرام',
+    },
+    {
+      key: 'KAIA',
+      name: 'Kaia',
+      nameAr: 'شبكة Kaia',
+      symbol: 'USDT',
+      address: '0xb85d38cd5274e92fed17728e644cb21ddb038fb6',
+      color: '#16c784',
+      icon: '🟢',
+      recommended: false,
+    },
+    {
+      key: 'opBNB',
+      name: 'opBNB',
+      nameAr: 'شبكة opBNB',
+      symbol: 'USDT',
+      address: '0xb85d38cd5274e92fed17728e644cb21ddb038fb6',
+      color: '#f5b041',
+      icon: '🟠',
+      recommended: false,
+      warning: 'شبكة BNB الطبقة الثانية',
+    },
+    {
+      key: 'CELO',
+      name: 'CELO',
+      nameAr: 'شبكة CELO',
+      symbol: 'USDT',
+      address: '0xb85d38cd5274e92fed17728e644cb21ddb038fb6',
+      color: '#f5b041',
+      icon: '🟡',
+      recommended: false,
+    },
+    {
+      key: 'PLASMA',
+      name: 'Plasma',
+      nameAr: 'شبكة Plasma',
+      symbol: 'USDT',
+      address: '0xb85d38cd5274e92fed17728e644cb21ddb038fb6',
+      color: '#8b5cf6',
+      icon: '🟣',
+      recommended: false,
+    },
+  ],
 };
 
 export const userBalance = {

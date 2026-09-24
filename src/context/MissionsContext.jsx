@@ -1,66 +1,91 @@
 'use client';
-import { createContext, useContext, useEffect, useState } from 'react';
-import { missions as initialMissions, depositBalance, MISSION_REWARD_PERCENT } from '@/data/mockData';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 const MissionsContext = createContext(null);
 
 export function MissionsProvider({ children }) {
+  const [missions, setMissions] = useState([]);
   const [completedIds, setCompletedIds] = useState([]);
   const [totalRewards, setTotalRewards] = useState(0);
+  const [depositBalance, setDepositBalance] = useState(0);
+  const [percent, setPercent] = useState(2);
+  const [loading, setLoading] = useState(true);
 
-  // استرجاع المهام المكتملة من localStorage
-  useEffect(() => {
+  // ============ جلب من API ============
+  const loadMissions = useCallback(async () => {
+    setLoading(true);
     try {
-      const saved = localStorage.getItem('aura-missions');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setCompletedIds(parsed.completedIds || []);
-        setTotalRewards(parsed.totalRewards || 0);
+      const res = await fetch('/api/user/missions');
+      if (res.ok) {
+        const data = await res.json();
+        setMissions(data.missions || []);
+        setCompletedIds(data.completedIds || []);
+        setTotalRewards(data.totalRewards || 0);
+        setDepositBalance(data.depositBalance || 0);
+        setPercent(data.percent || 2);
       }
     } catch (e) {
-      // ignore
+      console.error('Load missions error:', e);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
-  // حفظ عند التغيير
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    localStorage.setItem(
-      'aura-missions',
-      JSON.stringify({ completedIds, totalRewards })
-    );
-  }, [completedIds, totalRewards]);
+    loadMissions();
+  }, [loadMissions]);
 
-  const rewardPerMission = (depositBalance * MISSION_REWARD_PERCENT) / 100;
+  // ============ إكمال مهمة ============
+  const completeMission = useCallback(async (missionId) => {
+  const res = await fetch('/api/user/missions/complete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ missionId }),
+  });
 
-  const completeMission = (id) => {
-    if (completedIds.includes(id)) return false;
-    setCompletedIds((prev) => [...prev, id]);
-    setTotalRewards((prev) => prev + rewardPerMission);
-    return true;
-  };
+  const data = await res.json();
 
-  const resetMissions = () => {
-    setCompletedIds([]);
-    setTotalRewards(0);
-  };
+  if (!res.ok) {
+    throw new Error(data.error || 'فشل إكمال المهمة');
+  }
 
-  const value = {
-    missions: initialMissions,
-    completedIds,
-    totalRewards,
-    rewardPerMission,
-    depositBalance,
-    percent: MISSION_REWARD_PERCENT,
-    completeMission,
-    resetMissions,
-    isCompleted: (id) => completedIds.includes(id),
-    availableMissions: initialMissions.filter((m) => !completedIds.includes(m.id)),
-    allCompleted: completedIds.length === initialMissions.length,
-  };
+  // ✅ تحديث فوري
+  setCompletedIds((prev) => [...prev, missionId]);
+  setTotalRewards((prev) => prev + data.reward);
+
+  return data;
+}, []);
+
+  // ============ helpers ============
+  const isCompleted = useCallback(
+    (id) => completedIds.includes(id),
+    [completedIds]
+  );
+
+  const rewardPerMission = (depositBalance * percent) / 100;
+
+  const availableMissions = missions.filter((m) => !isCompleted(m.id));
+
+  const allCompleted =
+    missions.length > 0 && completedIds.length >= missions.length;
 
   return (
-    <MissionsContext.Provider value={value}>
+    <MissionsContext.Provider
+      value={{
+        missions,
+        completedIds,
+        totalRewards,
+        depositBalance,
+        percent,
+        rewardPerMission,
+        loading,
+        completeMission,
+        isCompleted,
+        availableMissions,
+        allCompleted,
+        refresh: loadMissions,
+      }}
+    >
       {children}
     </MissionsContext.Provider>
   );

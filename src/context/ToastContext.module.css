@@ -1,0 +1,160 @@
+/* ============ Container ============ */
+.container {
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 380px;
+  width: calc(100% - 40px);
+  pointer-events: none;
+}
+
+/* ============ Toast ============ */
+.toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  overflow: hidden;
+  animation: slideIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  backdrop-filter: blur(12px);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast.exiting {
+  animation: slideOut 0.3s ease forwards;
+}
+
+@keyframes slideOut {
+  to {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+}
+
+/* ============ Icon ============ */
+.iconWrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* ============ Message ============ */
+.message {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* ============ Close Button ============ */
+.closeBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  background: var(--bg-card-2);
+  color: var(--text-primary);
+}
+
+/* ============ Progress Bar ============ */
+.progress {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  height: 3px;
+  background: currentColor;
+  opacity: 0.4;
+  animation: progressBar 4s linear forwards;
+}
+
+@keyframes progressBar {
+  from { width: 100%; }
+  to { width: 0; }
+}
+
+/* ============ Types ============ */
+.success {
+  border-color: rgba(22, 199, 132, 0.4);
+}
+.success .iconWrap {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.success .progress {
+  color: var(--green);
+}
+
+.error {
+  border-color: rgba(234, 57, 67, 0.4);
+}
+.error .iconWrap {
+  background: var(--red-soft);
+  color: var(--red);
+}
+.error .progress {
+  color: var(--red);
+}
+
+.warning {
+  border-color: rgba(245, 176, 65, 0.4);
+}
+.warning .iconWrap {
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+.warning .progress {
+  color: var(--gold);
+}
+
+.info {
+  border-color: rgba(34, 211, 238, 0.4);
+}
+.info .iconWrap {
+  background: var(--cyan-soft);
+  color: var(--cyan);
+}
+.info .progress {
+  color: var(--cyan);
+}
+
+/* ============ Responsive ============ */
+@media (max-width: 640px) {
+  .container {
+    top: 70px;
+    left: 10px;
+    right: 10px;
+    max-width: none;
+    width: auto;
+  }
+}

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import {
   CheckCircle2, Gift, LineChart, Shield, Wallet,
-  Clock, TrendingUp, Lock, Award, Sparkles
+  Clock, TrendingUp, Award, Sparkles, RefreshCw, Lock
 } from 'lucide-react';
 import { useMissions } from '@/context/MissionsContext';
 import TaskModal from './TaskModal';
@@ -12,15 +12,44 @@ const ICONS = { chart: LineChart, shield: Shield, wallet: Wallet };
 
 export default function DailyMissions() {
   const {
-    missions, completedIds, totalRewards, rewardPerMission,
-    depositBalance, percent, isCompleted, allCompleted
+    missions,
+    completedIds,
+    totalRewards,
+    rewardPerMission,
+    depositBalance,
+    percent,
+    isCompleted,
+    allCompleted,
+    loading,
+    refresh,
   } = useMissions();
 
   const [activeMission, setActiveMission] = useState(null);
 
   const completedCount = completedIds.length;
   const totalCount = missions.length;
-  const progressPct = (completedCount / totalCount) * 100;
+  const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+
+  // ============ Loading ============
+  if (loading) {
+    return (
+      <div className={styles.loading}>
+        <RefreshCw size={20} className={styles.spin} />
+        <span>جاري تحميل المهام...</span>
+      </div>
+    );
+  }
+
+  // ============ Empty ============
+  if (missions.length === 0) {
+    return (
+      <div className={styles.empty}>
+        <Award size={32} />
+        <p>لا توجد مهام حالياً</p>
+        <span>عُد لاحقاً لمهام جديدة</span>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -67,13 +96,25 @@ export default function DailyMissions() {
             <Wallet size={18} />
           </div>
           <div>
-            <div className={styles.summaryLabel}>رصيد الإيداع ({percent}%)</div>
+            <div className={styles.summaryLabel}>
+              رصيد الإيداع ({percent}%)
+            </div>
             <div className={`${styles.summaryValue} mono`}>
               ${depositBalance.toFixed(2)}
             </div>
           </div>
         </div>
       </div>
+
+      {/* Warning if no deposit */}
+      {depositBalance <= 0 && (
+        <div className={styles.warningBox}>
+          <Lock size={14} />
+          <span>
+            ⚠️ يجب أن تُودع مبلغاً أولاً قبل إكمال المهام
+          </span>
+        </div>
+      )}
 
       {/* Progress */}
       <div className={styles.progress}>
@@ -94,6 +135,8 @@ export default function DailyMissions() {
         {missions.map((m) => {
           const Icon = ICONS[m.icon] || Gift;
           const done = isCompleted(m.id);
+          const canStart = !done && depositBalance > 0;
+
           return (
             <div
               key={m.id}
@@ -126,6 +169,10 @@ export default function DailyMissions() {
                   <span className={styles.statusDone}>
                     <CheckCircle2 size={12} /> مكتملة
                   </span>
+                ) : !canStart ? (
+                  <span className={styles.statusLocked}>
+                    <Lock size={12} /> يحتاج إيداع
+                  </span>
                 ) : (
                   <button
                     className={styles.startBtn}
@@ -142,7 +189,7 @@ export default function DailyMissions() {
       </div>
 
       {/* All completed */}
-      {allCompleted && (
+      {allCompleted && missions.length > 0 && (
         <div className={styles.allDone}>
           <Award size={20} />
           <div>
@@ -156,7 +203,10 @@ export default function DailyMissions() {
       {activeMission && (
         <TaskModal
           mission={activeMission}
-          onClose={() => setActiveMission(null)}
+          onClose={() => {
+            setActiveMission(null);
+            refresh(); // ✅ تحديث بعد الإغلاق
+          }}
         />
       )}
     </>

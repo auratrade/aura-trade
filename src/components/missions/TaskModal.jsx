@@ -7,16 +7,29 @@ import {
 import { useMissions } from '@/context/MissionsContext';
 import styles from './TaskModal.module.css';
 
-function Sparkline({ data, up }) {
+// ✅ sparkline افتراضي في حال لم يُعطَ
+const DEFAULT_SPARKLINE = [100, 102, 101, 103, 105, 104, 106, 108];
+
+function Sparkline({ data, up = true }) {
+  // ✅ قيمة افتراضية إذا كانت data غير معرفة أو فارغة
+  const safeData = Array.isArray(data) && data.length > 1
+    ? data
+    : DEFAULT_SPARKLINE;
+
   const W = 200, H = 50;
-  const min = Math.min(...data);
-  const max = Math.max(...data);
+  const min = Math.min(...safeData);
+  const max = Math.max(...safeData);
   const range = max - min || 1;
-  const points = data
-    .map((v, i) => `${(i / (data.length - 1)) * W},${H - ((v - min) / range) * H}`)
+  const points = safeData
+    .map((v, i) => `${(i / (safeData.length - 1)) * W},${H - ((v - min) / range) * H}`)
     .join(' ');
+
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className={styles.spark} preserveAspectRatio="none">
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className={styles.spark}
+      preserveAspectRatio="none"
+    >
       <polyline
         points={points}
         fill="none"
@@ -26,11 +39,12 @@ function Sparkline({ data, up }) {
     </svg>
   );
 }
-
 export default function TaskModal({ mission, onClose }) {
   const { completeMission, rewardPerMission, depositBalance, percent } = useMissions();
   const [step, setStep] = useState('view'); // view | processing | success
   const [quantity, setQuantity] = useState(1);
+  const [rewardAmount, setRewardAmount] = useState(0);
+
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -47,14 +61,27 @@ export default function TaskModal({ mission, onClose }) {
 
   const totalCost = (mission.price * quantity).toFixed(2);
 
-  const handleBuy = () => {
-    setStep('processing');
-    setTimeout(() => {
-      completeMission(mission.id);
-      setStep('success');
-    }, 1800);
-  };
+const handleBuy = async () => {
+  setStep('processing');
 
+  try {
+    const result = await completeMission(mission.id);
+    setRewardAmount(result.reward);
+    setStep('success');
+  } catch (err) {
+    console.error('Mission complete error:', err);
+    
+    // ✅ إذا 409 = مكتملة مسبقاً
+    if (err.message.includes('أكملت') || err.message.includes('بالفعل')) {
+      // اعتبرها مكتملة — أغلق النافذة
+      onClose();
+      return;
+    }
+    
+    setStep('view');
+    alert(err.message);
+  }
+};
   return (
     <div className={styles.overlay} onClick={onClose}>
       <div className={styles.modal} onClick={(e) => e.stopPropagation()}>

@@ -23,19 +23,7 @@
 .statValue { font-size: 16px; font-weight: 800; }
 .statLabel { font-size: 10px; color: var(--text-secondary); }
 
-.linkRow {
-  display: flex; gap: 6px;
-  margin-bottom: 12px;
-}
-.input {
-  flex: 1;
-  background: var(--bg-card-2);
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 11px;
-  outline: none;
-}
+
 .copyBtn, .shareBtn {
   display: flex; align-items: center; gap: 5px;
   padding: 0 14px;
@@ -43,7 +31,7 @@
   font-size: 12px;
   font-weight: 600;
 }
-.copyBtn { background: var(--gold); color: #0a0f1c; }
+
 .shareBtn { background: var(--bg-card-2); border: 1px solid var(--border-subtle); color: var(--text-primary); }
 
 .earnings {
@@ -66,4 +54,354 @@
 @media (max-width: 640px) {
   .top { grid-template-columns: 1fr; }
   .linkRow { flex-wrap: wrap; }
+}
+/* ============ LEVEL PROGRESS ============ */
+.progressCard {
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.progressHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.progressTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.progressTitle b { font-weight: 700; }
+.progressCount {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.progressBar {
+  height: 8px;
+  background: var(--bg-card);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.5s ease;
+}
+
+.progressFoot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* ============ LEVELS LIST ============ */
+.levelsList {
+  margin-bottom: 14px;
+}
+.levelsTitle {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 10px;
+}
+.levelsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.levelCard {
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.levelCard.current {
+  box-shadow: 0 0 0 1px var(--gold);
+}
+.levelCard.locked {
+  opacity: 0.55;
+}
+.levelCard.unlocked:hover {
+  transform: translateY(-2px);
+}
+
+.levelHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.levelIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+}
+.currentBadge {
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 20px;
+  background: var(--gold);
+  color: #0a0f1c;
+  font-weight: 700;
+}
+
+.levelName {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.levelReq {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+.levelComm {
+  font-size: 10px;
+  color: var(--text-muted);
+  padding-top: 4px;
+  border-top: 1px solid var(--border-subtle);
+}
+.levelComm b {
+  color: var(--green);
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .levelsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* تحسينات إضافية */
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.codeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.copyMini {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  transition: all 0.2s;
+}
+.copyMini:hover {
+  color: var(--gold);
+}
+
+
+
+.linkHead svg {
+  color: var(--gold);
+}
+
+
+.refreshBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  margin-top: 14px;
+  transition: all 0.2s;
+}
+.refreshBtn:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+.earningsBox {
+  background: linear-gradient(135deg, var(--green-soft), transparent);
+  border: 1px solid rgba(22, 199, 132, 0.3);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.earningsHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.earningsHead span {
+  font-size: 11px;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 2px;
+}
+.earningsHead b {
+  font-size: 18px;
+  font-weight: 800;
+}
+.transferBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--green), #0e9f6e);
+  color: #fff;
+  font-weight: 800;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+.transferBtn:hover:not(:disabled) {
+  box-shadow: 0 0 20px rgba(22, 199, 132, 0.4);
+  transform: translateY(-1px);
+}
+.transferBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ============ Share Code Section ============ */
+.shareSection {
+  background: linear-gradient(135deg, var(--gold-soft), transparent);
+  border: 1px solid rgba(245, 176, 65, 0.3);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.shareHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+
+.shareBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.shareCodeWrap {
+  flex: 1;
+  min-width: 180px;
+  background: var(--bg-card);
+  border: 2px dashed var(--gold);
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.shareCode {
+  font-family: 'Courier New', monospace;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--gold);
+  letter-spacing: 3px;
+}
+
+.shareActions {
+  display: flex;
+  gap: 8px;
+}
+
+.shareCopyBtn,
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  white-space: nowrap;
+}
+
+.shareCopyBtn {
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  color: #0a0f1c;
+  font-weight: 800;
+}
+.shareCopyBtn:hover {
+  box-shadow: 0 0 20px rgba(245, 176, 65, 0.4);
+  transform: translateY(-1px);
+}
+
+.shareBtn {
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+}
+.shareBtn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+.shareHint {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 640px) {
+  .shareBox {
+    flex-direction: column;
+  }
+  .shareCodeWrap {
+    width: 100%;
+  }
+  .shareActions {
+    width: 100%;
+  }
+  .shareCopyBtn,
+  .shareBtn {
+    flex: 1;
+  }
 }

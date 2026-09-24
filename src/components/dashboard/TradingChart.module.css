@@ -60,3 +60,112 @@
   border-top: 1px solid var(--border-subtle);
 }
 .statsRow b { color: var(--text-primary); }
+
+/* ============ LIVE INDICATOR ============ */
+.liveIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--green-soft);
+  border: 1px solid rgba(22, 199, 132, 0.3);
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--green);
+  margin-right: 8px;
+}
+.liveIcon {
+  animation: pulseIcon 2s ease-in-out infinite;
+}
+@keyframes pulseIcon {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.6;
+  }
+}
+
+/* ============ LIVE PRICE FLASH ============ */
+.priceFlash {
+  animation: priceFlashAnim 0.3s ease;
+}
+@keyframes priceFlashAnim {
+  0% { color: var(--gold); }
+  100% { color: var(--text-primary); }
+}
+
+/* ============ LAST CANDLE GLOW ============ */
+.lastCandle {
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.glowCandle {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+/* ============ LINE ANIMATIONS ============ */
+.linePath {
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 0;
+  transition: all 0.3s ease;
+}
+.pulseCircle {
+  filter: drop-shadow(0 0 6px var(--green));
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%, 100% { r: 4; opacity: 1; }
+  50% { r: 5.5; opacity: 0.8; }
+}
+.pulseRing {
+  animation: ringExpand 2s ease-out infinite;
+  transform-origin: center;
+}
+@keyframes ringExpand {
+  0% {
+    r: 4;
+    opacity: 1;
+  }
+  100% {
+    r: 14;
+    opacity: 0;
+  }
+}
+
+/* ============ LIVE STATS ============ */
+.liveStats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  color: var(--green);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* مسافة بين الرسم والأزرار */
+.statsRow + div {
+  margin-top: 12px;
+}

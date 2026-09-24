@@ -1,0 +1,387 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+//                    ReferralTier Enum
+// ============================================================
+enum ReferralTier {
+  STARTER
+  LEVEL1
+  LEVEL2
+  LEVEL3
+  LEVEL4
+  LEVEL5
+  VIP
+}
+
+// ============================================================
+//                        User
+// ============================================================
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  username      String   @unique
+  password      String
+  fullName      String?
+  accountLevel  Int      @default(0)
+  referralCount Int      @default(0)
+  referralCode  String   @unique
+  referredBy    String?
+  isVerified    Boolean  @default(false)
+
+  // الأرصدة
+  availableBalance Float  @default(0)
+  lockedBalance    Float  @default(0)
+  totalValue       Float  @default(0)
+  totalDeposited   Float  @default(0)
+  totalWithdrawn   Float  @default(0)
+  totalProfit      Float  @default(0)
+  totalLoss        Float  @default(0)
+
+  // الإحالات (قديم)
+  referralEarnings Float @default(0)
+  level1Referrals  Int   @default(0)
+  level2Referrals  Int   @default(0)
+  level3Referrals  Int   @default(0)
+
+  // ✅ نظام الإحالة الجديد
+  referralTier          ReferralTier @default(STARTER)
+  totalReferrals        Int          @default(0)
+  weeklySalaryUnlockedAt DateTime?
+  lastSalaryPaidAt      DateTime?
+  totalSalaryEarned     Float        @default(0)
+  totalBonusEarned      Float        @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ============ العلاقات ============
+  transactions   Transaction[]
+  earnings       Earning[]
+  referralEarn   ReferralEarning[] @relation("ReferralEarner")
+  referralBonuses ReferralBonus[]
+  weeklySalaries  WeeklySalary[]
+
+  // ✅ علاقة الإحالة الذاتية (حقلان فقط)
+  referrer      User?  @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: SetNull)
+  referredUsers User[] @relation("UserReferrals")
+
+  @@index([referralCode])
+  @@index([referredBy])
+  @@index([referralTier])
+  @@map("users")
+}
+
+// ============================================================
+//                    ReferralEarning (قديم)
+// ============================================================
+model ReferralEarning {
+  id          String   @id @default(uuid())
+  referrerId  String
+  referrer    User     @relation("ReferralEarner", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId  String
+  amount      Float
+  level       Int
+  sourceType  String
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@index([referrerId])
+  @@map("referral_earnings")
+}
+
+// ============================================================
+//                  ReferralRelation (جديد)
+// ============================================================
+model ReferralRelation {
+  id         String   @id @default(uuid())
+  referrerId String
+  referredId String
+  level      Int      @default(1)   // 1 = مباشر
+  createdAt  DateTime @default(now())
+
+  @@unique([referrerId, referredId])
+  @@index([referrerId])
+  @@index([referredId])
+  @@map("referral_relations")
+}
+
+// ============================================================
+//                  ReferralBonus (جديد)
+// ============================================================
+model ReferralBonus {
+  id         String       @id @default(uuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier       ReferralTier
+  amount     Float
+  milestone  Int          // عدد الإحالات الذي أدى للمكافأة
+  claimed    Boolean      @default(false)
+  claimedAt  DateTime?
+  createdAt  DateTime     @default(now())
+
+  @@unique([userId, tier])
+  @@index([userId])
+  @@index([claimed])
+  @@map("referral_bonuses")
+}
+
+// ============================================================
+//                  WeeklySalary (جديد)
+// ============================================================
+model WeeklySalary {
+  id         String       @id @default(uuid())
+  userId     String
+  user       User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tier       ReferralTier
+  amount     Float
+  weekStart  DateTime
+  weekEnd    DateTime
+  status     String       @default("pending")  // pending | paid | cancelled
+  paidAt     DateTime?
+  createdAt  DateTime     @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@map("weekly_salaries")
+}
+
+// ============================================================
+//                     Transaction
+// ============================================================
+model Transaction {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  amount    Float
+  network   String?
+  txid      String?
+  address   String?
+  status    String   @default("pending")
+  reason    String?
+  meta      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("transactions")
+}
+
+// ============================================================
+//                       Earning
+// ============================================================
+model Earning {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  amount      Float
+  description String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@map("earnings")
+}
+
+// ============================================================
+//                      OtpCode (مُحدَّث)
+// ============================================================
+model OtpCode {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  type      String   @default("register")  // register | reset | login | 2fa
+  used      Boolean  @default(false)
+  attempts  Int      @default(0)             // ✅ جديد — عدد المحاولات
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([code])
+  @@index([email, type])                     // ✅ جديد — للبحث السريع
+  @@map("otp_codes")
+}
+
+// ============================================================
+//              PasswordResetToken (جديد)
+// ============================================================
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@map("password_reset_tokens")
+}
+
+// ============================================================
+//                LoginAttempt (جديد)
+// ============================================================
+model LoginAttempt {
+  id         String   @id @default(uuid())
+  identifier String   // email or IP
+  type       String   // login | reset | register | otp
+  success    Boolean
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([identifier])
+  @@index([identifier, type])
+  @@index([createdAt])
+  @@map("login_attempts")
+}
+
+// ============================================================
+//                       Admin
+// ============================================================
+model Admin {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  username      String   @unique
+  password      String
+  fullName      String?
+  role          String   @default("admin")
+  isActive      Boolean  @default(true)
+  lastLoginAt   DateTime?
+  lastLoginIP   String?
+  loginAttempts Int      @default(0)
+  lockedUntil   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions AdminSession[]
+
+  @@map("admins")
+}
+
+// ============================================================
+//                   AdminSession
+// ============================================================
+model AdminSession {
+  id          String   @id @default(uuid())
+  adminId     String
+  admin       Admin    @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  token       String   @unique
+  adminSlug   String   @unique
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
+
+  @@index([adminId])
+  @@index([token])
+  @@index([adminSlug])
+  @@map("admin_sessions")
+}
+
+// ============================================================
+//                   AdminAction
+// ============================================================
+model AdminAction {
+  id         String   @id @default(uuid())
+  adminId    String
+  action     String
+  targetType String?
+  targetId   String?
+  details    String?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@index([adminId])
+  @@index([action])
+  @@map("admin_actions")
+}
+
+// ============================================================
+//                AdminNotification
+// ============================================================
+model AdminNotification {
+  id          String   @id @default(uuid())
+  type        String
+  title       String
+  message     String
+  referenceId String?
+  isRead      Boolean  @default(false)
+  priority    String   @default("normal")
+  createdAt   DateTime @default(now())
+
+  @@index([isRead])
+  @@index([type])
+  @@map("admin_notifications")
+}
+
+// ============================================================
+//                       Mission
+// ============================================================
+model Mission {
+  id           String   @id @default(uuid())
+  title        String
+  description  String
+  symbol       String
+  name         String
+  price        Float
+  change       Float    @default(0)
+  up           Boolean  @default(true)
+  icon         String   @default("chart")
+  difficulty   String   @default("سهل")
+  timeEstimate String   @default("30 ثانية")
+  reward       Float    @default(0)
+  isActive     Boolean  @default(true)
+  order        Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@map("missions")
+}
+
+// ============================================================
+//                MissionCompletion
+// ============================================================
+model MissionCompletion {
+  id          String   @id @default(uuid())
+  userId      String
+  missionId   String
+  reward      Float
+  depositBase Float
+  percent     Float    @default(2)
+  completedAt DateTime @default(now())
+
+  @@unique([userId, missionId])
+  @@index([userId])
+  @@map("mission_completions")
+}
+
+// ============================================================
+//                UserNotification
+// ============================================================
+model UserNotification {
+  id          String   @id @default(uuid())
+  userId      String
+  type        String   // tier_upgrade | salary_unlock | deposit | withdraw | mission | system
+  title       String
+  message     String
+  icon        String   @default("bell")
+  priority    String   @default("normal") // low | normal | high | urgent
+  actionUrl   String?  // رابط للانتقال إليه
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("user_notifications")
+}

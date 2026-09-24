@@ -8,12 +8,12 @@ import OrderBook from '@/components/dashboard/OrderBook';
 import MarketCards from '@/components/dashboard/MarketCards';
 import DailyMissions from '@/components/missions/DailyMissions';
 import DepositWithdraw from '@/components/wallet/DepositWithdraw';
+import TransactionsHistory from '@/components/wallet/TransactionsHistory';
 import ReferralPanel from '@/components/referrals/ReferralPanel';
 import TeamPerformance from '@/components/referrals/TeamPerformance';
 import SecurityPanel from '@/components/security/SecurityPanel';
 import SectionTitle from '@/components/common/SectionTitle';
 import styles from './dashboard.module.css';
-import TransactionsHistory from '@/components/wallet/TransactionsHistory';
 
 export default function DashboardPage() {
   return (
@@ -22,7 +22,6 @@ export default function DashboardPage() {
       <MarketTicker />
 
       <SectionTitle icon={LineChart} title="منطقة التداول" subtitle="BTC/USDT • رسم بياني مباشر" />
-
       <div className={styles.tradingGrid}>
         <div className={styles.chartCol}>
           <TradingChart />
@@ -42,8 +41,9 @@ export default function DashboardPage() {
       <DepositWithdraw />
 
       <SectionTitle icon={Wallet} title="سجل العمليات" subtitle="كل الإيداعات والسحوبات الخاصة بك" />
-        <TransactionsHistory />
+      <TransactionsHistory />
 
+      {/* ⚠️ تأكد: ReferralPanel مرة واحدة فقط */}
       <SectionTitle icon={Users} title="برنامج الإحالة" subtitle="ادعُ أصدقاءك واربح عمولات" />
       <div className={styles.referralGrid}>
         <ReferralPanel />

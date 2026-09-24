@@ -41,3 +41,146 @@
   font-size: 12px;
   font-weight: 700;
 }
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.refreshBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  transition: all 0.2s;
+}
+.refreshBtn:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.loading {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.earningsBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--gold-soft), transparent);
+  border: 1px solid rgba(245, 176, 65, 0.25);
+  border-radius: var(--radius);
+  margin-top: 12px;
+}
+.earningsBox span {
+  font-size: 10px;
+  color: var(--text-secondary);
+  display: block;
+}
+.earningsBox b {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+/* ============ Loading ============ */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============ Header ============ */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+.refreshBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  transition: all 0.2s;
+}
+.refreshBtn:hover:not(:disabled) {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.refreshBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============ Progress Foot ============ */
+.progressFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.progressFoot b {
+  color: var(--text-primary);
+}
+.progressFoot .text-gold {
+  color: var(--gold);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ============ Earnings Box ============ */
+.earningsBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: linear-gradient(135deg, var(--gold-soft), transparent);
+  border: 1px solid rgba(245, 176, 65, 0.25);
+  border-radius: var(--radius);
+  margin-top: 12px;
+}
+.earningsBox svg {
+  flex-shrink: 0;
+}
+.earningsBox span {
+  font-size: 10px;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 2px;
+}
+.earningsBox b {
+  font-size: 16px;
+  font-weight: 800;
+}

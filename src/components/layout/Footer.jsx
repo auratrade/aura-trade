@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import styles from './Footer.module.css';
 
+const FOOTER_LINKS = [
+  { href: '/privacy', label: 'الخصوصية' },
+  { href: '/terms', label: 'الشروط' },
+  { href: '/support', label: 'الدعم' },
+  { href: '/terms', label: 'سياسة الاستخدام' },
+];
+
 export default function Footer() {
   return (
     <footer className={styles.footer}>
@@ -15,11 +22,11 @@ export default function Footer() {
           </div>
         </div>
         <div className={styles.links}>
-          <Link href="#">الخصوصية</Link>
-          <Link href="#">الشروط</Link>
-          <Link href="#">الأمان</Link>
-          <Link href="#">سياسة الاستخدام</Link>
-          <Link href="#">الدعم</Link>
+          {FOOTER_LINKS.map((link, i) => (
+            <Link key={i} href={link.href}>
+              {link.label}
+            </Link>
+          ))}
         </div>
       </div>
     </footer>

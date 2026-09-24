@@ -1,57 +1,179 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
-  Copy, Check, Wallet, QrCode, Shield, ArrowDownToLine,
-  ArrowUpFromLine, AlertTriangle, Upload, Info, Loader2
+  Copy, Check, Wallet, Shield, ArrowDownToLine,
+  ArrowUpFromLine, AlertTriangle, Upload, Info, Loader2,
+  Sparkles, ChevronDown
 } from 'lucide-react';
-import { binanceWallet, userBalance } from '@/data/mockData';
+import { binanceWallet } from '@/data/mockData';
+import { useToast } from '@/context/ToastContext';
+import { useAuth } from '@/context/AuthContext';
 import styles from './DepositWithdraw.module.css';
 
-const NETWORKS = ['USDT - TRC20', 'USDT - ERC20', 'USDT - BEP20'];
+// QR Code Generator (SVG بسيط)
+// QR Code Generator (SVG via API)
+function QRCodeSVG({ value, size = 200 }) {
+  const encoded = encodeURIComponent(value);
+  const url = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encoded}&bgcolor=ffffff&color=000000&margin=10`;
 
+  return (
+    <div
+      style={{
+        width: '100%',
+        maxWidth: size,
+        aspectRatio: '1 / 1',
+        background: '#fff',
+        borderRadius: 12,
+        padding: 8,
+        display: 'grid',
+        placeItems: 'center',
+        margin: '0 auto',
+      }}
+    >
+      <img
+        src={url}
+        alt="QR Code"
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: 'contain',
+          display: 'block',
+        }}
+        loading="lazy"
+      />
+    </div>
+  );
+}
 export default function DepositWithdraw({ initialTab = 'deposit' }) {
+  const toast = useToast();
+  const { user, refreshBalance } = useAuth();
+
   const [tab, setTab] = useState(initialTab);
   const [copied, setCopied] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Deposit state
+  // ✅ الشبكة الافتراضية = BEP20
+  const [networkKey, setNetworkKey] = useState(binanceWallet.defaultNetwork);
+
+  // ============ إيجاد الشبكة الحالية ============
+  const currentNetwork = useMemo(
+    () =>
+      binanceWallet.networks.find((n) => n.key === networkKey) ||
+      binanceWallet.networks[0],
+    [networkKey]
+  );
+
+  // ============ Deposit State ============
   const [depAmount, setDepAmount] = useState('');
   const [depTxid, setDepTxid] = useState('');
-  const [depNetwork, setDepNetwork] = useState(NETWORKS[0]);
   const [depProof, setDepProof] = useState(null);
 
-  // Withdraw state
+  // ============ Withdraw State ============
   const [wdAmount, setWdAmount] = useState('');
   const [wdAddress, setWdAddress] = useState('');
-  const [wdNetwork, setWdNetwork] = useState(NETWORKS[0]);
   const [wdPin, setWdPin] = useState('');
 
+  // ============ نسخ العنوان ============
   const copyAddress = () => {
-    navigator.clipboard?.writeText(binanceWallet.address);
+    navigator.clipboard?.writeText(currentNetwork.address);
     setCopied(true);
+    toast.success('تم نسخ العنوان');
     setTimeout(() => setCopied(false), 1500);
   };
 
-  const handleDepositSubmit = (e) => {
+  // ============ إرسال طلب الإيداع ============
+  const handleDepositSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
+
+    if (!depAmount || parseFloat(depAmount) < binanceWallet.minDeposit) {
+      toast.error(`الحد الأدنى للإيداع ${binanceWallet.minDeposit} USDT`);
+      return;
+    }
+
+    if (!depTxid || depTxid.trim().length < 10) {
+      toast.error('الرجاء إدخال هاش المعاملة (TXID) صحيح');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const res = await fetch('/api/user/deposit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: parseFloat(depAmount),
+          network: `${currentNetwork.name} (${currentNetwork.key})`,
+          txid: depTxid.trim(),
+          proof: depProof ? depProof.name : null,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'فشل إرسال الطلب');
+      }
+
+      toast.success('✅ تم إرسال طلب الإيداع! سيتم مراجعته خلال 5-30 دقيقة');
       setDepAmount('');
       setDepTxid('');
       setDepProof(null);
-    }, 2500);
+    } catch (err) {
+      console.error('Deposit error:', err);
+      toast.error(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleWithdrawSubmit = (e) => {
+  // ============ إرسال طلب السحب ============
+  const handleWithdrawSubmit = async (e) => {
     e.preventDefault();
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
+
+    if (!wdAmount || parseFloat(wdAmount) < binanceWallet.minWithdraw) {
+      toast.error(`الحد الأدنى للسحب ${binanceWallet.minWithdraw} USDT`);
+      return;
+    }
+    if (!wdAddress || wdAddress.trim().length < 20) {
+      toast.error('الرجاء إدخال عنوان محفظة صحيح');
+      return;
+    }
+    if (wdPin.length !== 4) {
+      toast.error('رمز PIN يجب أن يكون 4 أرقام');
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const res = await fetch('/api/user/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: parseFloat(wdAmount),
+          network: `${currentNetwork.name} (${currentNetwork.key})`,
+          address: wdAddress.trim(),
+          pin: wdPin,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'فشل إرسال الطلب');
+
+      toast.success('✅ تم استلام طلب السحب! سيُعالج خلال 24 ساعة');
       setWdAmount('');
       setWdAddress('');
       setWdPin('');
-    }, 2500);
+
+      if (refreshBalance) await refreshBalance();
+    } catch (err) {
+      console.error('Withdraw error:', err);
+      toast.error(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -61,12 +183,14 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
         <button
           className={`${styles.tab} ${tab === 'deposit' ? styles.activeTab : ''}`}
           onClick={() => setTab('deposit')}
+          type="button"
         >
           <ArrowDownToLine size={14} /> إيداع
         </button>
         <button
           className={`${styles.tab} ${tab === 'withdraw' ? styles.activeTab : ''}`}
           onClick={() => setTab('withdraw')}
+          type="button"
         >
           <ArrowUpFromLine size={14} /> سحب
         </button>
@@ -75,6 +199,7 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
       {/* ================= DEPOSIT ================= */}
       {tab === 'deposit' && (
         <>
+          {/* تحذير */}
           <div className={styles.notice}>
             <AlertTriangle size={16} />
             <div>
@@ -82,41 +207,122 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
             </div>
           </div>
 
-          <div className={styles.grid}>
-            {/* LEFT: Address + Form */}
-            <form className={styles.form} onSubmit={handleDepositSubmit}>
-              <label className={styles.field}>
-                <span>شبكة الإيداع</span>
-                <select
-                  value={depNetwork}
-                  onChange={(e) => setDepNetwork(e.target.value)}
-                  className={styles.select}
-                >
-                  {NETWORKS.map(n => <option key={n}>{n}</option>)}
-                </select>
-              </label>
+          {/* ============ اختيار الشبكة ============ */}
+          <div className={styles.networkSection}>
+            <div className={styles.networkLabel}>
+              <Sparkles size={14} />
+              <span>اختر الشبكة</span>
+            </div>
 
+            <div className={styles.networkGrid}>
+              {binanceWallet.networks.map((net) => (
+                <button
+                  key={net.key}
+                  type="button"
+                  className={`${styles.networkCard} ${
+                    networkKey === net.key ? styles.networkActive : ''
+                  }`}
+                  onClick={() => setNetworkKey(net.key)}
+                  style={
+                    networkKey === net.key
+                      ? { borderColor: net.color }
+                      : {}
+                  }
+                >
+                  <div className={styles.networkHead}>
+                    <span className={styles.networkIcon}>{net.icon}</span>
+                    {net.recommended && (
+                      <span className={styles.recommendedBadge}>مميزة</span>
+                    )}
+                  </div>
+                  <div
+                    className={styles.networkName}
+                    style={
+                      networkKey === net.key ? { color: net.color } : {}
+                    }
+                  >
+                    {net.key}
+                  </div>
+                  <div className={styles.networkNameEn}>{net.name}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ============ معلومات الشبكة المختارة ============ */}
+          <div
+            className={styles.selectedNetwork}
+            style={{ borderColor: currentNetwork.color + '55' }}
+          >
+            <div className={styles.selectedHead}>
+              <div
+                className={styles.selectedIcon}
+                style={{
+                  background: currentNetwork.color + '22',
+                  color: currentNetwork.color,
+                }}
+              >
+                {currentNetwork.icon}
+              </div>
+              <div>
+                <div
+                  className={styles.selectedName}
+                  style={{ color: currentNetwork.color }}
+                >
+                  {currentNetwork.name}
+                </div>
+                <div className={styles.selectedNameAr}>
+                  {currentNetwork.nameAr}
+                </div>
+              </div>
+            </div>
+
+            {currentNetwork.warning && (
+              <div
+                className={styles.networkWarning}
+                style={{
+                  background: currentNetwork.color + '15',
+                  borderColor: currentNetwork.color + '44',
+                  color: currentNetwork.color,
+                }}
+              >
+                <Info size={12} />
+                {currentNetwork.warning}
+              </div>
+            )}
+          </div>
+
+          <div className={styles.grid}>
+            {/* LEFT: Form */}
+            <form className={styles.form} onSubmit={handleDepositSubmit}>
+              {/* العنوان */}
               <label className={styles.field}>
-                <span>عنوان محفظة Binance (المنصة)</span>
+                <span>عنوان المحفظة ({currentNetwork.key})</span>
                 <div className={styles.copyWrap}>
                   <input
-                    value={binanceWallet.address}
+                    value={currentNetwork.address}
                     readOnly
                     className={`${styles.input} mono`}
+                    style={{ fontSize: 11 }}
                   />
                   <button
                     type="button"
                     onClick={copyAddress}
                     className={styles.copyBtn}
                   >
-                    {copied ? <Check size={14} className="text-green" /> : <Copy size={14} />}
+                    {copied ? (
+                      <Check size={14} className="text-green" />
+                    ) : (
+                      <Copy size={14} />
+                    )}
                   </button>
                 </div>
                 <small className={styles.hint}>
-                  أرسل المبلغ إلى هذا العنوان <b>قبل</b> تعبئة النموذج
+                  أرسل المبلغ إلى هذا العنوان <b>على شبكة {currentNetwork.key}</b> قبل تعبئة النموذج
                 </small>
               </label>
 
+              {/* المبلغ */}
               <label className={styles.field}>
                 <span>المبلغ المُحوَّل (USDT)</span>
                 <input
@@ -131,21 +337,23 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
                 />
               </label>
 
+              {/* TXID */}
               <label className={styles.field}>
-                <span>هاش المعاملة (TXID) من Binance</span>
+                <span>هاش المعاملة (TXID)</span>
                 <input
                   type="text"
-                  placeholder="مثال: 0xabc123def456..."
+                  placeholder="0xabc123def456..."
                   value={depTxid}
                   onChange={(e) => setDepTxid(e.target.value)}
                   className={`${styles.input} mono`}
                   required
                 />
                 <small className={styles.hint}>
-                  تجده في سجل معاملات Binance بعد التحويل
+                  تجده في سجل المعاملات في محفظتك بعد التحويل
                 </small>
               </label>
 
+              {/* إثبات */}
               <label className={styles.field}>
                 <span>إثبات التحويل (صورة) — اختياري</span>
                 <div className={styles.fileWrap}>
@@ -163,48 +371,49 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
                 </div>
               </label>
 
+              {/* Submit */}
               <button
                 type="submit"
                 className={styles.submit}
-                disabled={submitted}
+                disabled={submitting}
+                style={{
+                  background: `linear-gradient(135deg, ${currentNetwork.color}, ${currentNetwork.color}cc)`,
+                }}
               >
-                {submitted ? (
-                  <><Loader2 size={16} className={styles.spin} /> جاري إرسال الطلب...</>
+                {submitting ? (
+                  <>
+                    <Loader2 size={16} className={styles.spin} /> جاري الإرسال...
+                  </>
                 ) : (
-                  'تأكيد إرسال طلب الإيداع'
+                  `تأكيد إرسال طلب الإيداع (${currentNetwork.key})`
                 )}
               </button>
-
-              {submitted && (
-                <div className={styles.successMsg}>
-                  <Check size={14} />
-                  تم إرسال طلبك بنجاح! سيتم التحقق منه خلال 5-30 دقيقة.
-                </div>
-              )}
             </form>
 
-            {/* RIGHT: QR + Info */}
+            {/* RIGHT: QR Code */}
             <div className={styles.qrBox}>
               <div className={styles.qrHeader}>
-                <QrCode size={16} />
+                <Shield size={16} />
                 <span>امسح الرمز للتحويل</span>
               </div>
+
               <div className={styles.qr}>
-                <svg viewBox="0 0 100 100">
-                  {Array.from({ length: 100 }).map((_, i) => {
-                    const x = (i % 10) * 10;
-                    const y = Math.floor(i / 10) * 10;
-                    const filled = (i * 7) % 3 === 0;
-                    return filled ? (
-                      <rect key={i} x={x} y={y} width="10" height="10" fill="#0a0f1c" />
-                    ) : null;
-                  })}
-                </svg>
+                <QRCodeSVG value={currentNetwork.address} size={220} />
               </div>
-              <div className={styles.qrNetwork}>
+
+              <div
+                className={styles.qrNetwork}
+                style={{
+                  background: currentNetwork.color + '15',
+                  borderColor: currentNetwork.color + '44',
+                }}
+              >
                 <span>الشبكة</span>
-                <b>{binanceWallet.network}</b>
+                <b style={{ color: currentNetwork.color }}>
+                  {currentNetwork.name} ({currentNetwork.key})
+                </b>
               </div>
+
               <div className={styles.qrNote}>
                 <Shield size={12} />
                 تأكد من مطابقة الشبكة قبل الإرسال
@@ -214,14 +423,31 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
 
           {/* Steps */}
           <div className={styles.steps}>
-            <h4 className={styles.stepsTitle}>خطوات الإيداع</h4>
+            <h4 className={styles.stepsTitle}>
+              خطوات الإيداع على شبكة {currentNetwork.key}
+            </h4>
             <ol className={styles.stepsList}>
-              <li><span>1</span> افتح تطبيق Binance واذهب إلى <b>المحفظة → سحب</b></li>
-              <li><span>2</span> اختر <b>USDT</b> ثم الشبكة <b>TRC20</b></li>
-              <li><span>3</span> الصق عنوان المنصة أعلاه وأدخل المبلغ</li>
-              <li><span>4</span> أكّد التحويل وانسخ <b>TXID</b></li>
-              <li><span>5</span> ارجع لهذه الصفحة واملأ النموذج واضغط <b>تأكيد</b></li>
-              <li><span>6</span> انتظر مراجعة الإدارة (5-30 دقيقة)</li>
+              <li>
+                <span>1</span> افتح محفظتك أو منصتك (Binance، Trust Wallet، إلخ)
+              </li>
+              <li>
+                <span>2</span> اختر <b>إرسال</b> ثم <b>USDT</b>
+              </li>
+              <li>
+                <span>3</span> اختر الشبكة{' '}
+                <b style={{ color: currentNetwork.color }}>
+                  {currentNetwork.name} ({currentNetwork.key})
+                </b>
+              </li>
+              <li>
+                <span>4</span> الصق العنوان أعلاه وأدخل المبلغ
+              </li>
+              <li>
+                <span>5</span> أكّد التحويل وانسخ <b>TXID</b>
+              </li>
+              <li>
+                <span>6</span> ارجع لهذه الصفحة واملأ النموذج
+              </li>
             </ol>
           </div>
         </>
@@ -231,48 +457,85 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
       {tab === 'withdraw' && (
         <>
           <div className={styles.balanceBox}>
-           <div className={styles.balanceItem}>
-  <span>الرصيد المتاح</span>
-  <b className="mono text-green">
-    {userBalance.available.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
-  </b>
-</div>
-<div className={styles.balanceItem}>
-  <span>قيد السحب</span>
-  <b className="mono">
-    {userBalance.pendingWithdraw.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDT
-  </b>
-</div>
+            <div className={styles.balanceItem}>
+              <span>الرصيد المتاح</span>
+              <b className="mono text-green">
+                ${user?.availableBalance?.toFixed(2) || '0.00'} USDT
+              </b>
+            </div>
+            <div className={styles.balanceItem}>
+              <span>قيد السحب</span>
+              <b className="mono">
+                ${user?.lockedBalance?.toFixed(2) || '0.00'} USDT
+              </b>
+            </div>
             <div className={styles.balanceItem}>
               <span>رسوم السحب</span>
               <b className="mono">{binanceWallet.withdrawFee} USDT</b>
             </div>
           </div>
 
+          {/* اختيار الشبكة للسحب */}
+          <div className={styles.networkSection}>
+            <div className={styles.networkLabel}>
+              <Sparkles size={14} />
+              <span>اختر شبكة السحب</span>
+            </div>
+
+            <div className={styles.networkGrid}>
+              {binanceWallet.networks.map((net) => (
+                <button
+                  key={net.key}
+                  type="button"
+                  className={`${styles.networkCard} ${
+                    networkKey === net.key ? styles.networkActive : ''
+                  }`}
+                  onClick={() => setNetworkKey(net.key)}
+                  style={
+                    networkKey === net.key
+                      ? { borderColor: net.color }
+                      : {}
+                  }
+                >
+                  <div className={styles.networkHead}>
+                    <span className={styles.networkIcon}>{net.icon}</span>
+                    {net.recommended && (
+                      <span className={styles.recommendedBadge}>مميزة</span>
+                    )}
+                  </div>
+                  <div
+                    className={styles.networkName}
+                    style={
+                      networkKey === net.key ? { color: net.color } : {}
+                    }
+                  >
+                    {net.key}
+                  </div>
+                  <div className={styles.networkNameEn}>{net.name}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <form className={styles.form} onSubmit={handleWithdrawSubmit}>
             <label className={styles.field}>
-              <span>شبكة السحب</span>
-              <select
-                value={wdNetwork}
-                onChange={(e) => setWdNetwork(e.target.value)}
-                className={styles.select}
-              >
-                {NETWORKS.map(n => <option key={n}>{n}</option>)}
-              </select>
-            </label>
-
-            <label className={styles.field}>
-              <span>عنوان محفظتك الشخصية</span>
+              <span>عنوان محفظتك الشخصية على شبكة {currentNetwork.key}</span>
               <input
                 type="text"
-                placeholder="الصق عنوان محفظتك (TRC20)"
+                placeholder={
+                  currentNetwork.key === 'TRC20'
+                    ? 'T...'
+                    : currentNetwork.key === 'TON'
+                    ? 'UQ...'
+                    : '0x...'
+                }
                 value={wdAddress}
                 onChange={(e) => setWdAddress(e.target.value)}
                 className={`${styles.input} mono`}
                 required
               />
               <small className={styles.hint}>
-                ⚠️ تأكد من صحة العنوان — لا يمكن التراجع بعد الإرسال
+                ⚠️ تأكد أن العنوان يدعم شبكة {currentNetwork.key}
               </small>
             </label>
 
@@ -307,21 +570,27 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
               />
             </label>
 
-            {/* Summary */}
             {wdAmount && (
               <div className={styles.summary}>
                 <div className={styles.summaryRow}>
                   <span>المبلغ المطلوب</span>
-                  <b className="mono">{parseFloat(wdAmount || 0).toFixed(2)} USDT</b>
+                  <b className="mono">
+                    {parseFloat(wdAmount || 0).toFixed(2)} USDT
+                  </b>
                 </div>
                 <div className={styles.summaryRow}>
                   <span>رسوم الشبكة</span>
-                  <b className="mono text-red">- {binanceWallet.withdrawFee} USDT</b>
+                  <b className="mono text-red">
+                    - {binanceWallet.withdrawFee} USDT
+                  </b>
                 </div>
                 <div className={`${styles.summaryRow} ${styles.summaryTotal}`}>
                   <span>ستستلم</span>
                   <b className="mono text-green">
-                    {(parseFloat(wdAmount || 0) - binanceWallet.withdrawFee).toFixed(2)} USDT
+                    {(
+                      parseFloat(wdAmount || 0) - binanceWallet.withdrawFee
+                    ).toFixed(2)}{' '}
+                    USDT
                   </b>
                 </div>
               </div>
@@ -330,29 +599,16 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
             <button
               type="submit"
               className={styles.submit}
-              disabled={submitted}
+              disabled={submitting}
             >
-              {submitted ? (
-                <><Loader2 size={16} className={styles.spin} /> جاري إرسال الطلب...</>
+              {submitting ? (
+                <>
+                  <Loader2 size={16} className={styles.spin} /> جاري الإرسال...
+                </>
               ) : (
-                'طلب السحب'
+                `طلب السحب على شبكة ${currentNetwork.key}`
               )}
             </button>
-
-            {submitted && (
-              <div className={styles.successMsg}>
-                <Check size={14} />
-                تم استلام طلب السحب! سيُعالج خلال 24 ساعة.
-              </div>
-            )}
-
-            <div className={styles.infoBox}>
-              <Info size={14} />
-              <div>
-                تُعالج طلبات السحب يدوياً من محفظة المنصة على Binance خلال <b>1-24 ساعة</b>.
-                تأكد من صحة العنوان لتفادي فقدان الأموال.
-              </div>
-            </div>
           </form>
         </>
       )}
