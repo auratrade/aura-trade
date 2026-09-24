@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import { transferReferralEarnings } from '@/lib/referral';
 import { updateUserBalances } from '@/lib/balance';
 
 export async function POST() {
@@ -10,30 +10,61 @@ export async function POST() {
       return NextResponse.json({ error: 'غير مصرّح' }, { status: 401 });
     }
 
-    const result = await transferReferralEarnings(session.userId);
+    // ============ جلب المستخدم ============
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { referralEarnings: true },
+    });
 
-    if (!result.success) {
-      if (result.error === 'no_earnings') {
-        return NextResponse.json(
-          { error: 'لا توجد أرباح قابلة للنقل' },
-          { status: 400 }
-        );
-      }
+    if (!user) {
       return NextResponse.json(
-        { error: 'فشل نقل الأرباح' },
-        { status: 500 }
+        { error: 'المستخدم غير موجود' },
+        { status: 404 }
       );
     }
 
-    // حدّث الأرصدة
-    await updateUserBalances(session.userId);
+    if (!user.referralEarnings || user.referralEarnings <= 0) {
+      return NextResponse.json(
+        { error: 'لا توجد أرباح قابلة للنقل' },
+        { status: 400 }
+      );
+    }
+
+    const amount = user.referralEarnings;
+
+    // ============ نقل الأرباح (transaction) ============
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: session.userId },
+        data: {
+          availableBalance: { increment: amount },
+          referralEarnings: 0,
+        },
+      });
+
+      await tx.earning.create({
+        data: {
+          userId: session.userId,
+          type: 'referral',
+          amount,
+          description: 'نقل أرباح الإحالة إلى الرصيد المتاح',
+        },
+      });
+    });
+
+    // ============ تحديث الأرصدة ============
+    try {
+      await updateUserBalances(session.userId);
+    } catch (e) {
+      console.error('Update balances error:', e);
+    }
 
     return NextResponse.json({
       success: true,
-      transferred: result.amount,
+      transferred: amount,
     });
   } catch (error) {
-    console.error('Transfer error:', error);
+    console.error('🔥 Transfer earnings error:', error);
     return NextResponse.json(
       { error: 'فشل نقل الأرباح' },
       { status: 500 }

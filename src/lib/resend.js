@@ -1,14 +1,26 @@
 import { Resend } from 'resend';
 
-export const resend = new Resend(process.env.RESEND_API_KEY);
+// ✅ إنشاء Client فقط إذا المفتاح موجود (يمنع فشل البناء)
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 /**
  * إرسال OTP عبر البريد
  */
 export async function sendOtpEmail({ to, code, name = 'عزيزي' }) {
+  // ✅ وضع التطوير: اطبع الكود في Terminal
+  if (!resend) {
+    console.log('\n============================================');
+    console.log('🔑 OTP CODE (Resend not configured)');
+    console.log('   To:', to);
+    console.log('   Code:', code);
+    console.log('============================================\n');
+    return { success: true, id: 'dev-mode' };
+  }
+
   try {
     const { data, error } = await resend.emails.send({
-    from: 'AURA TRADE <noreply@auratrade.abrdns.com>', // مؤقتاً
+      from: 'AURA TRADE <noreply@auratrade.abrdns.com>',
       to: [to],
       subject: `رمز التحقق الخاص بك: ${code}`,
       html: `
