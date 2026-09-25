@@ -16,12 +16,15 @@ export function AdminProvider({ children }) {
     fetchAdmin();
   }, []);
 
-  // ✅ نقطة القرار الوحيدة للتوجيه عند غياب الأدمن.
-  //    ما في أي مكان تاني بالتطبيق (صفحات، هيدر...) لازم يعمل
-  //    window.location.href لصفحة اللوجين عند 401 — هون بس.
+  // ✅ نقطة القرار الوحيدة للتوجيه عند غياب الأدمن —
+  //    بس فقط لما يكون المستخدم أصلاً داخل منطقة الأدمن
+  //    (/admin/...). زائر عادي بيفتح / أو /login مثلاً ما
+  //    لازم ينلمس بهالمنطق إطلاقًا، حتى لو admin === null
+  //    عنده (وهاد طبيعي 100% لأي مستخدم مش أدمن).
   useEffect(() => {
     if (loading) return;
-    if (!admin && pathname !== SECRET_ADMIN_LOGIN) {
+    const isAdminArea = pathname.startsWith('/admin');
+    if (isAdminArea && !admin && pathname !== SECRET_ADMIN_LOGIN) {
       router.replace(SECRET_ADMIN_LOGIN);
     }
   }, [admin, loading, pathname, router]);
