@@ -9,11 +9,21 @@ import { ConfirmProvider } from '@/context/ConfirmContext';
 import { AdminProvider } from '@/context/AdminContext';
 
 export const metadata = {
-  title: 'AURA TRADE & INVEST',
+  title: 'AURA TRADE & INVEST | منصة التداول والاستثمار',
   description: 'منصة تداول واستثمار مالي احترافية',
-  robots: {
-    index: false,
-    follow: false,
+  icons: {
+    icon: [
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+    other: [
+      { rel: 'android-chrome-192x192', url: '/android-chrome-192x192.png', sizes: '192x192' },
+      { rel: 'android-chrome-512x512', url: '/android-chrome-512x512.png', sizes: '512x512' },
+    ],
   },
 };
 

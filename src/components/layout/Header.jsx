@@ -124,14 +124,18 @@ export default function Header() {
     <header className={styles.header}>
       <div className={`${styles.inner} container`}>
         <div className={styles.brand}>
-          <div className={styles.logo}>
-            <span className={styles.logoMark}>A</span>
-          </div>
-          <div className={styles.brandText}>
-            <div className={styles.brandName}>AURA TRADE</div>
-            <div className={styles.brandSub}>& INVEST</div>
-          </div>
-        </div>
+  <div className={styles.logo}>
+    <img
+      src="/logo.jpg"
+      alt="AURA TRADE"
+      className={styles.logoImg}
+    />
+  </div>
+  <div className={styles.brandText}>
+    <div className={styles.brandName}>AURA TRADE</div>
+    <div className={styles.brandSub}>& INVEST</div>
+  </div>
+</div>
 
         <nav className={`${styles.nav} ${mobileOpen ? styles.navOpen : ''}`}>
           {NAV_LINKS.map(({ href, label, icon: Icon }) => {
