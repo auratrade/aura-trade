@@ -1,76 +1,37 @@
 'use client';
 import { useState } from 'react';
-import {
-  X, Save, Loader2, AlertCircle, Target,
-  TrendingUp, TrendingDown
-} from 'lucide-react';
+import { X, Target, Loader2, AlertCircle, Play } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import styles from './MissionModal.module.css';
 
-const DIFFICULTIES = ['سهل', 'متوسط', 'صعب'];
-const ICONS = [
-  { value: 'chart', label: 'مخطط' },
-  { value: 'shield', label: 'درع' },
-  { value: 'wallet', label: 'محفظة' },
-];
-
-export default function MissionModal({ mission, mode = 'create', onClose, onRefresh }) {
+export default function MissionModal({ onClose, onRefresh }) {
   const toast = useToast();
-  const isEdit = mode === 'edit';
-
-  const [form, setForm] = useState({
-    title: mission?.title || '',
-    description: mission?.description || '',
-    symbol: mission?.symbol || '',
-    name: mission?.name || '',
-    price: mission?.price || '',
-    change: mission?.change || 0,
-    up: mission?.up !== undefined ? mission.up : true,
-    icon: mission?.icon || 'chart',
-    difficulty: mission?.difficulty || 'سهل',
-    timeEstimate: mission?.timeEstimate || '30 ثانية',
-    reward: mission?.reward || 0,
-    isActive: mission?.isActive !== undefined ? mission.isActive : true,
-  });
-
+  const [title, setTitle] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-
-  const update = (key) => (e) => {
-    const val = e.target.type === 'checkbox' ? e.target.checked : e.target.value;
-    setForm({ ...form, [key]: val });
-    setError('');
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // التحقق
-    if (!form.title.trim()) { setError('العنوان مطلوب'); return; }
-    if (!form.description.trim()) { setError('الوصف مطلوب'); return; }
-    if (!form.symbol.trim()) { setError('الرمز مطلوب'); return; }
-    if (!form.name.trim()) { setError('اسم الشركة مطلوب'); return; }
-    if (!form.price) { setError('السعر مطلوب'); return; }
+    if (!title.trim()) {
+      setError('الرجاء إدخال اسم المهمة');
+      return;
+    }
 
     setSaving(true);
+
     try {
-      const url = isEdit
-        ? `/api/admin/missions/${mission.id}`
-        : '/api/admin/missions';
-
-      const method = isEdit ? 'PATCH' : 'POST';
-
-      const res = await fetch(url, {
-        method,
+      const res = await fetch('/api/admin/missions', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ title: title.trim() }),
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'فشل الحفظ');
+      if (!res.ok) throw new Error(data.error || 'فشل إنشاء المهمة');
 
-      toast.success(isEdit ? 'تم تعديل المهمة' : 'تم إنشاء المهمة');
+      toast.success('✅ تم بدء المهمة! ستنتهي بعد 60 دقيقة');
       onRefresh?.();
       onClose();
     } catch (err) {
@@ -87,15 +48,11 @@ export default function MissionModal({ mission, mode = 'create', onClose, onRefr
         <div className={styles.header}>
           <div className={styles.headerLeft}>
             <div className={styles.iconWrap}>
-              <Target size={20} />
+              <Target size={22} />
             </div>
             <div>
-              <h3 className={styles.title}>
-                {isEdit ? 'تعديل المهمة' : 'مهمة جديدة'}
-              </h3>
-              <p className={styles.subtitle}>
-                {isEdit ? mission.symbol : 'أنشئ مهمة جديدة للمستخدمين'}
-              </p>
+              <h3 className={styles.title}>إضافة مهمة جديدة</h3>
+              <p className={styles.subtitle}>ستبدأ فوراً وتنتهي بعد 60 دقيقة</p>
             </div>
           </div>
           <button className={styles.closeBtn} onClick={onClose}>
@@ -104,177 +61,58 @@ export default function MissionModal({ mission, mode = 'create', onClose, onRefr
         </div>
 
         {/* Body */}
-        <form onSubmit={handleSubmit} className={styles.form}>
+        <form onSubmit={handleSubmit} className={styles.body}>
           {error && (
             <div className={styles.errorBox}>
-              <AlertCircle size={14} /> {error}
+              <AlertCircle size={14} />
+              {error}
             </div>
           )}
 
-          <div className={styles.grid}>
-            <label className={styles.field} style={{ gridColumn: 'span 2' }}>
-              <span>عنوان المهمة *</span>
-              <input
-                type="text"
-                value={form.title}
-                onChange={update('title')}
-                placeholder="مثال: شراء سهم NVIDIA"
-                className={styles.input}
-              />
-            </label>
+          <label className={styles.field}>
+            <span>اسم المهمة</span>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="مثال: شراء سهم NVIDIA"
+              className={styles.input}
+              autoFocus
+              maxLength={100}
+            />
+          </label>
 
-            <label className={styles.field} style={{ gridColumn: 'span 2' }}>
-              <span>الوصف *</span>
-              <textarea
-                value={form.description}
-                onChange={update('description')}
-                placeholder="قم بشراء سهم NVIDIA..."
-                rows={2}
-                className={styles.input}
-              />
-            </label>
+          <div className={styles.infoBox}>
+            <Play size={14} />
+            <span>
+              المهمة ستبدأ <b>فوراً</b> وستنتهي تلقائياً بعد <b>60 دقيقة</b> من الآن.
+              يمكنك إنهاؤها يدوياً في أي وقت.
+            </span>
+          </div>
 
-            <label className={styles.field}>
-              <span>الرمز *</span>
-              <input
-                type="text"
-                value={form.symbol}
-                onChange={update('symbol')}
-                placeholder="NVDA"
-                className={`${styles.input} mono`}
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>اسم الشركة *</span>
-              <input
-                type="text"
-                value={form.name}
-                onChange={update('name')}
-                placeholder="NVIDIA Corp."
-                className={styles.input}
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>السعر (USDT) *</span>
-              <input
-                type="number"
-                step="0.01"
-                value={form.price}
-                onChange={update('price')}
-                placeholder="134.25"
-                className={`${styles.input} mono`}
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>التغير (%)</span>
-              <input
-                type="number"
-                step="0.01"
-                value={form.change}
-                onChange={update('change')}
-                placeholder="3.85"
-                className={`${styles.input} mono`}
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>الاتجاه</span>
-              <select
-                value={form.up ? 'up' : 'down'}
-                onChange={(e) => setForm({ ...form, up: e.target.value === 'up' })}
-                className={styles.input}
-              >
-                <option value="up">📈 صعود</option>
-                <option value="down">📉 هبوط</option>
-              </select>
-            </label>
-
-            <label className={styles.field}>
-              <span>الصعوبة</span>
-              <select
-                value={form.difficulty}
-                onChange={update('difficulty')}
-                className={styles.input}
-              >
-                {DIFFICULTIES.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className={styles.field}>
-              <span>الأيقونة</span>
-              <select
-                value={form.icon}
-                onChange={update('icon')}
-                className={styles.input}
-              >
-                {ICONS.map((i) => (
-                  <option key={i.value} value={i.value}>{i.label}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className={styles.field}>
-              <span>الوقت المتوقع</span>
-              <input
-                type="text"
-                value={form.timeEstimate}
-                onChange={update('timeEstimate')}
-                placeholder="30 ثانية"
-                className={styles.input}
-              />
-            </label>
-
-            <label className={styles.field}>
-              <span>مكافأة ثابتة (USDT) — اختياري</span>
-              <input
-                type="number"
-                step="0.01"
-                value={form.reward}
-                onChange={update('reward')}
-                placeholder="0 = يُحسب من الإيداع"
-                className={`${styles.input} mono`}
-              />
-            </label>
-
-            <label className={styles.checkbox}>
-              <input
-                type="checkbox"
-                checked={form.isActive}
-                onChange={update('isActive')}
-              />
-              <span>المهمة نشطة (تظهر للمستخدمين)</span>
-            </label>
+          {/* Footer */}
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.cancelBtn}
+              onClick={onClose}
+              disabled={saving}
+            >
+              إلغاء
+            </button>
+            <button
+              type="submit"
+              className={styles.startBtn}
+              disabled={saving}
+            >
+              {saving ? (
+                <><Loader2 size={14} className={styles.spin} /> جاري البدء...</>
+              ) : (
+                <><Play size={14} /> بدء المهمة</>
+              )}
+            </button>
           </div>
         </form>
-
-        {/* Footer */}
-        <div className={styles.footer}>
-          <button
-            type="button"
-            className={styles.cancelBtn}
-            onClick={onClose}
-            disabled={saving}
-          >
-            إلغاء
-          </button>
-          <button
-            type="button"
-            className={styles.saveBtn}
-            onClick={handleSubmit}
-            disabled={saving}
-          >
-            {saving ? (
-              <><Loader2 size={14} className={styles.spin} /> جاري الحفظ...</>
-            ) : (
-              <><Save size={14} /> {isEdit ? 'حفظ التعديلات' : 'إنشاء المهمة'}</>
-            )}
-          </button>
-        </div>
       </div>
     </div>
   );

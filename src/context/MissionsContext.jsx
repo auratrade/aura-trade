@@ -1,89 +1,96 @@
 'use client';
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 
 const MissionsContext = createContext(null);
 
 export function MissionsProvider({ children }) {
-  const [missions, setMissions] = useState([]);
-  const [completedIds, setCompletedIds] = useState([]);
-  const [totalRewards, setTotalRewards] = useState(0);
+  const [mission, setMission] = useState(null);
   const [depositBalance, setDepositBalance] = useState(0);
+  const [completed, setCompleted] = useState(false);
+  const [totalRewards, setTotalRewards] = useState(0);
   const [percent, setPercent] = useState(2);
   const [loading, setLoading] = useState(true);
 
-  // ============ جلب من API ============
-  const loadMissions = useCallback(async () => {
-    setLoading(true);
+  // ============ جلب المهمة الحالية ============
+  const loadMission = useCallback(async () => {
     try {
       const res = await fetch('/api/user/missions');
       if (res.ok) {
         const data = await res.json();
-        setMissions(data.missions || []);
-        setCompletedIds(data.completedIds || []);
-        setTotalRewards(data.totalRewards || 0);
+        setMission(data.mission || null);
         setDepositBalance(data.depositBalance || 0);
+        setCompleted(data.completed || false);
+        setTotalRewards(data.totalRewards || 0);
         setPercent(data.percent || 2);
       }
     } catch (e) {
-      console.error('Load missions error:', e);
+      console.error('Load mission error:', e);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // ============ تحميل أولي ============
   useEffect(() => {
-    loadMissions();
-  }, [loadMissions]);
+    loadMission();
+  }, [loadMission]);
 
-  // ============ إكمال مهمة ============
+  // ============ تحديث دوري كل 30 ثانية ============
+  useEffect(() => {
+    const iv = setInterval(loadMission, 30000);
+    return () => clearInterval(iv);
+  }, [loadMission]);
+
+  // ============ إكمال المهمة ============
   const completeMission = useCallback(async (missionId) => {
-  const res = await fetch('/api/user/missions/complete', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ missionId }),
-  });
+    const res = await fetch('/api/user/missions/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ missionId }),
+    });
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data.error || 'فشل إكمال المهمة');
-  }
+    if (!res.ok) {
+      throw new Error(data.error || 'فشل إكمال المهمة');
+    }
 
-  // ✅ تحديث فوري
-  setCompletedIds((prev) => [...prev, missionId]);
-  setTotalRewards((prev) => prev + data.reward);
+    // ✅ تحديث الحالة
+    setCompleted(true);
+    setTotalRewards((prev) => prev + data.reward);
 
-  return data;
-}, []);
+    return data;
+  }, []);
 
-  // ============ helpers ============
-  const isCompleted = useCallback(
-    (id) => completedIds.includes(id),
-    [completedIds]
-  );
-
+  // ============ المكافأة لكل مهمة ============
   const rewardPerMission = (depositBalance * percent) / 100;
 
-  const availableMissions = missions.filter((m) => !isCompleted(m.id));
+  // ============ هل يمكن إكمال المهمة؟ ============
+  const canComplete = mission && !completed && depositBalance > 0;
 
-  const allCompleted =
-    missions.length > 0 && completedIds.length >= missions.length;
+  // ============ هل انتهت المهمة؟ ============
+  const isExpired = mission ? new Date() > new Date(mission.endsAt) : false;
 
   return (
     <MissionsContext.Provider
       value={{
-        missions,
-        completedIds,
-        totalRewards,
+        mission,
         depositBalance,
+        completed,
+        totalRewards,
         percent,
         rewardPerMission,
         loading,
+        canComplete,
+        isExpired,
         completeMission,
-        isCompleted,
-        availableMissions,
-        allCompleted,
-        refresh: loadMissions,
+        refresh: loadMission,
       }}
     >
       {children}

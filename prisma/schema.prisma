@@ -328,25 +328,20 @@ model AdminNotification {
 //                       Mission
 // ============================================================
 model Mission {
-  id           String   @id @default(uuid())
-  title        String
-  description  String
-  symbol       String
-  name         String
-  price        Float
-  change       Float    @default(0)
-  up           Boolean  @default(true)
-  icon         String   @default("chart")
-  difficulty   String   @default("سهل")
-  timeEstimate String   @default("30 ثانية")
-  reward       Float    @default(0)
-  isActive     Boolean  @default(true)
-  order        Int      @default(0)
+  id          String   @id @default(uuid())
+  title       String
+  status      String   @default("active")  // active | ended
+  startedAt   DateTime @default(now())
+  endsAt      DateTime                      // startedAt + 60 دقيقة
+  endedAt     DateTime?                     // وقت الإنهاء الفعلي
+  endedBy     String?                       // 'auto' | adminId
+  createdBy   String?                       // adminId
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  @@index([isActive])
+  @@index([status])
+  @@index([endsAt])
   @@map("missions")
 }
 

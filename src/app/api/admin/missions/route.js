@@ -11,7 +11,7 @@ export async function GET() {
     }
 
     const missions = await prisma.mission.findMany({
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      orderBy: { startedAt: 'desc' },
     });
 
     return NextResponse.json({ missions });
@@ -21,7 +21,7 @@ export async function GET() {
   }
 }
 
-// ============ إنشاء مهمة ============
+// ============ إنشاء مهمة جديدة (60 دقيقة) ============
 export async function POST(request) {
   try {
     const session = await getCurrentAdmin();
@@ -30,47 +30,38 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const {
-      title,
-      description,
-      symbol,
-      name,
-      price,
-      change,
-      up,
-      icon,
-      difficulty,
-      timeEstimate,
-      reward,
-      isActive,
-    } = body;
+    const { title } = body;
 
-    // التحقق
-    if (!title || !description || !symbol || !name || !price) {
+    if (!title || !title.trim()) {
       return NextResponse.json(
-        { error: 'الرجاء ملء جميع الحقول المطلوبة' },
+        { error: 'الرجاء إدخال اسم المهمة' },
         { status: 400 }
       );
     }
 
-    // ترتيب تلقائي
-    const count = await prisma.mission.count();
+    // ⚠️ تحقق: هل هناك مهمة نشطة بالفعل؟
+    const activeMission = await prisma.mission.findFirst({
+      where: { status: 'active' },
+    });
+
+    if (activeMission) {
+      return NextResponse.json(
+        { error: 'لا يمكن إنشاء مهمة جديدة قبل إنهاء المهمة الحالية' },
+        { status: 400 }
+      );
+    }
+
+    // ✅ حساب وقت الانتهاء (60 دقيقة من الآن)
+    const startedAt = new Date();
+    const endsAt = new Date(startedAt.getTime() + 60 * 60 * 1000);
 
     const mission = await prisma.mission.create({
       data: {
-        title,
-        description,
-        symbol: symbol.toUpperCase(),
-        name,
-        price: parseFloat(price),
-        change: parseFloat(change || 0),
-        up: up !== undefined ? up : true,
-        icon: icon || 'chart',
-        difficulty: difficulty || 'سهل',
-        timeEstimate: timeEstimate || '30 ثانية',
-        reward: parseFloat(reward || 0),
-        isActive: isActive !== undefined ? isActive : true,
-        order: count,
+        title: title.trim(),
+        status: 'active',
+        startedAt,
+        endsAt,
+        createdBy: session.admin.id,
       },
     });
 
@@ -79,12 +70,12 @@ export async function POST(request) {
       action: 'create_mission',
       targetType: 'mission',
       targetId: mission.id,
-      details: { title, symbol },
+      details: { title: mission.title, endsAt },
     });
 
     return NextResponse.json({ success: true, mission });
   } catch (error) {
-    console.error('Create mission error:', error);
+    console.error('🔥 Create mission error:', error);
     return NextResponse.json(
       { error: 'حدث خطأ أثناء إنشاء المهمة' },
       { status: 500 }

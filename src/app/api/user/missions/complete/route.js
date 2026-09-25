@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
-const REWARD_PERCENT = 2; // 2%
+const REWARD_PERCENT = 2;
 
 export async function POST(request) {
   try {
@@ -20,7 +20,7 @@ export async function POST(request) {
       );
     }
 
-    // 1️⃣ جلب المهمة
+    // 1) جلب المهمة
     const mission = await prisma.mission.findUnique({
       where: { id: missionId },
     });
@@ -32,14 +32,23 @@ export async function POST(request) {
       );
     }
 
-    if (!mission.isActive) {
+    // 2) التحقق من الحالة
+    if (mission.status !== 'active') {
       return NextResponse.json(
-        { error: 'المهمة غير نشطة' },
+        { error: 'المهمة منتهية' },
         { status: 400 }
       );
     }
 
-    // 2️⃣ تحقق من عدم الإكمال المسبق
+    // ⚠️ التحقق من الوقت
+    if (new Date() > mission.endsAt) {
+      return NextResponse.json(
+        { error: 'انتهى وقت المهمة' },
+        { status: 400 }
+      );
+    }
+
+    // 3) تحقق من عدم الإكمال المسبق
     const existing = await prisma.missionCompletion.findUnique({
       where: {
         userId_missionId: {
@@ -56,35 +65,27 @@ export async function POST(request) {
       );
     }
 
-    // 3️⃣ جلب بيانات المستخدم (للرصيد)
+    // 4) جلب رصيد الإيداع
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
-      select: {
-        totalDeposited: true,
-        availableBalance: true,
-        totalProfit: true,
-      },
+      select: { totalDeposited: true },
     });
 
-    // 4️⃣ حساب المكافأة
-    // القاعدة: 2% من إجمالي الإيداعات
     const depositBase = user.totalDeposited || 0;
 
     if (depositBase <= 0) {
       return NextResponse.json(
-        {
-          error: 'يجب أن تُودع مبلغاً أولاً قبل إكمال المهام',
-        },
+        { error: 'يجب أن تُودع مبلغاً أولاً' },
         { status: 400 }
       );
     }
 
+    // 5) حساب المكافأة
     const reward = (depositBase * REWARD_PERCENT) / 100;
 
-    // 5️⃣ حفظ الإكمال + إضافة الرصيد (في transaction)
+    // 6) حفظ الإكمال + إضافة الرصيد
     const result = await prisma.$transaction(async (tx) => {
-      // سجل الإكمال
-      const completion = await tx.missionCompletion.create({
+      await tx.missionCompletion.create({
         data: {
           userId: session.userId,
           missionId,
@@ -94,16 +95,16 @@ export async function POST(request) {
         },
       });
 
-      // أضف الرصيد
-     const updatedUser = await tx.user.update({
-  where: { id: session.userId },
-  data: {
-    availableBalance: { increment: reward },
-    withdrawableBalance: { increment: reward },  // ✅ جديد
-    totalProfit: { increment: reward },
-  },
-});
-      // سجل في earnings
+      const updated = await tx.user.update({
+        where: { id: session.userId },
+        data: {
+          availableBalance: { increment: reward },
+          withdrawableBalance: { increment: reward },
+          totalProfit: { increment: reward },
+        },
+        select: { availableBalance: true },
+      });
+
       await tx.earning.create({
         data: {
           userId: session.userId,
@@ -113,41 +114,20 @@ export async function POST(request) {
         },
       });
 
-      return { completion, updatedUser };
+      return updated;
     });
-
-    // 6️⃣ (اختياري) إشعار الأدمن
-    try {
-      await prisma.adminNotification.create({
-        data: {
-          type: 'system',
-          title: 'إكمال مهمة',
-          message: `مستخدم أكمل مهمة "${mission.title}" وربح $${reward.toFixed(2)}`,
-          referenceId: session.userId,
-          priority: 'low',
-        },
-      });
-    } catch (e) {
-      console.error('Notification error:', e);
-    }
 
     return NextResponse.json({
       success: true,
       reward,
       depositBase,
       percent: REWARD_PERCENT,
-      newBalance: result.updatedUser.availableBalance,
+      newBalance: result.availableBalance,
     });
   } catch (error) {
     console.error('🔥 Complete mission error:', error);
     return NextResponse.json(
-      {
-        error: 'حدث خطأ أثناء إكمال المهمة',
-        details:
-          process.env.NODE_ENV === 'development'
-            ? error.message
-            : undefined,
-      },
+      { error: 'حدث خطأ أثناء إكمال المهمة' },
       { status: 500 }
     );
   }

@@ -1,72 +1,116 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  CheckCircle2, Gift, LineChart, Shield, Wallet,
-  Clock, TrendingUp, Award, Sparkles, RefreshCw, Lock
+  Gift, Target, Clock, TrendingUp, Award, Sparkles,
+  RefreshCw, Wallet, CheckCircle2, Lock, AlertCircle,
+  Timer, Play
 } from 'lucide-react';
 import { useMissions } from '@/context/MissionsContext';
 import TaskModal from './TaskModal';
 import styles from './DailyMissions.module.css';
 
-const ICONS = { chart: LineChart, shield: Shield, wallet: Wallet };
-
 export default function DailyMissions() {
   const {
-    missions,
-    completedIds,
-    totalRewards,
-    rewardPerMission,
+    mission,
     depositBalance,
+    completed,
+    totalRewards,
     percent,
-    isCompleted,
-    allCompleted,
+    rewardPerMission,
     loading,
+    canComplete,
+    isExpired,
     refresh,
   } = useMissions();
 
   const [activeMission, setActiveMission] = useState(null);
+  const [now, setNow] = useState(Date.now());
 
-  const completedCount = completedIds.length;
-  const totalCount = missions.length;
-  const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  // ⚠️ تحديث المؤقت كل ثانية
+  useEffect(() => {
+    const iv = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(iv);
+  }, []);
+
+  // ============ تحويل الوقت ============
+  const formatTime = (d) =>
+    new Date(d).toLocaleTimeString('ar-EG', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  const formatDate = (d) =>
+    new Date(d).toLocaleDateString('ar-EG', {
+      day: 'numeric',
+      month: 'short',
+    });
+
+  // ============ الوقت المتبقي ============
+  const getTimeLeft = () => {
+    if (!mission) return { hours: 0, minutes: 0, seconds: 0, expired: true };
+    const diff = new Date(mission.endsAt).getTime() - now;
+    if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0, expired: true };
+
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    return { hours, minutes, seconds, expired: false };
+  };
 
   // ============ Loading ============
   if (loading) {
     return (
       <div className={styles.loading}>
         <RefreshCw size={20} className={styles.spin} />
-        <span>جاري تحميل المهام...</span>
+        <span>جاري تحميل المهمة...</span>
       </div>
     );
   }
 
-  // ============ Empty ============
-  if (missions.length === 0) {
+  // ============ لا توجد مهمة نشطة ============
+  if (!mission) {
     return (
       <div className={styles.empty}>
-        <Award size={32} />
-        <p>لا توجد مهام حالياً</p>
-        <span>عُد لاحقاً لمهام جديدة</span>
+        <div className={styles.emptyIconWrap}>
+          <Target size={32} />
+        </div>
+        <p className={styles.emptyTitle}>لا توجد مهمة نشطة</p>
+        <span className={styles.emptyText}>
+          عُد لاحقاً — يتم إضافة المهام بشكل دوري
+        </span>
+        <button className={styles.refreshBtn} onClick={refresh}>
+          <RefreshCw size={12} />
+          تحديث
+        </button>
       </div>
     );
   }
+
+  // ============ المهمة منتهية ============
+  if (isExpired) {
+    return (
+      <div className={styles.expired}>
+        <div className={styles.expiredIcon}>
+          <Timer size={32} />
+        </div>
+        <p className={styles.expiredTitle}>انتهت المهمة</p>
+        <span className={styles.expiredText}>
+          انتهى الوقت المخصص لهذه المهمة. عُد لاحقاً لمهام جديدة.
+        </span>
+        <button className={styles.refreshBtn} onClick={refresh}>
+          <RefreshCw size={12} />
+          تحديث
+        </button>
+      </div>
+    );
+  }
+
+  const timeLeft = getTimeLeft();
 
   return (
     <>
-      {/* Summary bar */}
+      {/* ============ Summary Bar ============ */}
       <div className={styles.summary}>
-        <div className={styles.summaryItem}>
-          <div className={styles.summaryIcon}>
-            <Award size={18} />
-          </div>
-          <div>
-            <div className={styles.summaryLabel}>المهام المكتملة</div>
-            <div className={`${styles.summaryValue} mono`}>
-              {completedCount} / {totalCount}
-            </div>
-          </div>
-        </div>
-
         <div className={styles.summaryItem}>
           <div className={`${styles.summaryIcon} ${styles.gold}`}>
             <Gift size={18} />
@@ -84,7 +128,7 @@ export default function DailyMissions() {
             <Sparkles size={18} />
           </div>
           <div>
-            <div className={styles.summaryLabel}>مكافأة كل مهمة</div>
+            <div className={styles.summaryLabel}>مكافأة المهمة</div>
             <div className={`${styles.summaryValue} mono text-gold`}>
               ${rewardPerMission.toFixed(2)}
             </div>
@@ -96,9 +140,7 @@ export default function DailyMissions() {
             <Wallet size={18} />
           </div>
           <div>
-            <div className={styles.summaryLabel}>
-              رصيد الإيداع ({percent}%)
-            </div>
+            <div className={styles.summaryLabel}>رصيد الإيداع ({percent}%)</div>
             <div className={`${styles.summaryValue} mono`}>
               ${depositBalance.toFixed(2)}
             </div>
@@ -106,106 +148,162 @@ export default function DailyMissions() {
         </div>
       </div>
 
-      {/* Warning if no deposit */}
+      {/* ============ Warning: No Deposit ============ */}
       {depositBalance <= 0 && (
         <div className={styles.warningBox}>
           <Lock size={14} />
           <span>
-            ⚠️ يجب أن تُودع مبلغاً أولاً قبل إكمال المهام
+            يجب أن <b>تُودع</b> مبلغاً أولاً لتتمكن من كسب مكافآت المهام.
           </span>
         </div>
       )}
 
-      {/* Progress */}
-      <div className={styles.progress}>
-        <div className={styles.progressHead}>
-          <span>تقدمك اليومي</span>
-          <b className="mono">{progressPct.toFixed(0)}%</b>
+      {/* ============ Mission Card ============ */}
+      <div className={`${styles.missionCard} ${completed ? styles.missionCompleted : ''}`}>
+        {/* Live indicator */}
+        <div className={styles.liveBadge}>
+          <span className={styles.liveDot} />
+          <span>مباشر</span>
         </div>
+
+        {/* Header */}
+        <div className={styles.missionHead}>
+          <div className={styles.missionIconWrap}>
+            {completed ? (
+              <CheckCircle2 size={24} />
+            ) : (
+              <TrendingUp size={24} />
+            )}
+          </div>
+          <div className={styles.missionInfo}>
+            <div className={styles.missionTitle}>
+              {mission.title}
+            </div>
+            <div className={styles.missionMeta}>
+              <span className={styles.rewardTag}>
+                <Gift size={11} />
+                +${rewardPerMission.toFixed(2)} USDT
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Time Info */}
+        <div className={styles.timeGrid}>
+          <div className={styles.timeBlock}>
+            <div className={styles.timeIcon}>
+              <Play size={12} />
+            </div>
+            <div>
+              <div className={styles.timeLabel}>بدأت</div>
+              <div className={styles.timeValue}>
+                {formatTime(mission.startedAt)}
+              </div>
+              <div className={styles.timeDate}>
+                {formatDate(mission.startedAt)}
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.timeArrow}>←</div>
+
+          <div className={styles.timeBlock}>
+            <div className={styles.timeIcon} style={{ color: 'var(--red)' }}>
+              <Timer size={12} />
+            </div>
+            <div>
+              <div className={styles.timeLabel}>تنتهي</div>
+              <div className={styles.timeValue}>
+                {formatTime(mission.endsAt)}
+              </div>
+              <div className={styles.timeDate}>
+                {formatDate(mission.endsAt)}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Countdown */}
+        <div className={styles.countdown}>
+          <div className={styles.countdownLabel}>
+            <Clock size={12} />
+            الوقت المتبقي
+          </div>
+          <div className={styles.countdownTimer}>
+            <div className={styles.timeUnit}>
+              <span className={`${styles.timeNum} mono`}>
+                {String(timeLeft.hours).padStart(2, '0')}
+              </span>
+              <span className={styles.timeLbl}>ساعة</span>
+            </div>
+            <span className={styles.timeSep}>:</span>
+            <div className={styles.timeUnit}>
+              <span className={`${styles.timeNum} mono`}>
+                {String(timeLeft.minutes).padStart(2, '0')}
+              </span>
+              <span className={styles.timeLbl}>دقيقة</span>
+            </div>
+            <span className={styles.timeSep}>:</span>
+            <div className={styles.timeUnit}>
+              <span className={`${styles.timeNum} mono`}>
+                {String(timeLeft.seconds).padStart(2, '0')}
+              </span>
+              <span className={styles.timeLbl}>ثانية</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Bar (based on time) */}
         <div className={styles.progressBar}>
           <div
             className={styles.progressFill}
-            style={{ width: `${progressPct}%` }}
+            style={{
+              width: `${Math.max(
+                0,
+                Math.min(
+                  100,
+                  ((now - new Date(mission.startedAt).getTime()) /
+                    (new Date(mission.endsAt).getTime() -
+                      new Date(mission.startedAt).getTime())) *
+                    100
+                )
+              )}%`,
+            }}
           />
         </div>
-      </div>
 
-      {/* Missions list */}
-      <div className={styles.list}>
-        {missions.map((m) => {
-          const Icon = ICONS[m.icon] || Gift;
-          const done = isCompleted(m.id);
-          const canStart = !done && depositBalance > 0;
-
-          return (
-            <div
-              key={m.id}
-              className={`${styles.item} ${done ? styles.done : ''}`}
-            >
-              <div className={`${styles.iconWrap} ${done ? styles.iconDone : ''}`}>
-                {done ? <CheckCircle2 size={18} /> : <Icon size={18} />}
-              </div>
-
-              <div className={styles.content}>
-                <div className={styles.titleRow}>
-                  <span className={styles.title}>{m.title}</span>
-                  <span className={styles.symbol}>{m.symbol}</span>
-                </div>
-                <div className={styles.metaRow}>
-                  <span className={styles.reward}>
-                    <Gift size={11} /> +${rewardPerMission.toFixed(2)}
-                  </span>
-                  <span className={styles.metaDot}>•</span>
-                  <span className={styles.meta}>
-                    <Clock size={11} /> {m.timeEstimate}
-                  </span>
-                  <span className={styles.metaDot}>•</span>
-                  <span className={styles.meta}>{m.difficulty}</span>
-                </div>
-              </div>
-
-              <div className={styles.action}>
-                {done ? (
-                  <span className={styles.statusDone}>
-                    <CheckCircle2 size={12} /> مكتملة
-                  </span>
-                ) : !canStart ? (
-                  <span className={styles.statusLocked}>
-                    <Lock size={12} /> يحتاج إيداع
-                  </span>
-                ) : (
-                  <button
-                    className={styles.startBtn}
-                    onClick={() => setActiveMission(m)}
-                  >
-                    <TrendingUp size={14} />
-                    استطلاع المهمة
-                  </button>
-                )}
-              </div>
+        {/* Action */}
+        <div className={styles.missionAction}>
+          {completed ? (
+            <div className={styles.completedBox}>
+              <CheckCircle2 size={18} />
+              <span>أكملت هذه المهمة بنجاح</span>
             </div>
-          );
-        })}
+          ) : !canComplete ? (
+            <div className={styles.lockedBox}>
+              <Lock size={14} />
+              <span>يجب إيداع مبلغ أولاً</span>
+            </div>
+          ) : (
+            <button
+              className={styles.startBtn}
+              onClick={() => setActiveMission(mission)}
+            >
+              <TrendingUp size={16} />
+              استطلاع المهمة
+              <Award size={16} />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* All completed */}
-      {allCompleted && missions.length > 0 && (
-        <div className={styles.allDone}>
-          <Award size={20} />
-          <div>
-            <b>🎉 أكملت جميع المهام اليوم!</b>
-            <span>عُد غداً لمهام جديدة ومكافآت إضافية</span>
-          </div>
-        </div>
-      )}
-
-      {/* Modal */}
+      {/* ============ Modal ============ */}
       {activeMission && (
         <TaskModal
           mission={activeMission}
           onClose={() => {
             setActiveMission(null);
-            refresh(); // ✅ تحديث بعد الإغلاق
+            refresh();
           }}
         />
       )}

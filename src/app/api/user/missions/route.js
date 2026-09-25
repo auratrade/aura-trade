@@ -6,56 +6,86 @@ export async function GET() {
   try {
     const session = await getCurrentUser();
 
-    // جلب المهام النشطة
-    const missions = await prisma.mission.findMany({
-      where: { isActive: true },
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+    // ⚠️ إنهاء المهام المنتهية تلقائياً (أفضلية للأداء)
+    await prisma.mission.updateMany({
+      where: {
+        status: 'active',
+        endsAt: { lt: new Date() },
+      },
+      data: {
+        status: 'ended',
+        endedAt: new Date(),
+        endedBy: 'auto',
+      },
     });
 
-    console.log('🔵 Missions from DB:', missions.length);
+    // جلب المهمة النشطة (واحدة فقط)
+    const mission = await prisma.mission.findFirst({
+      where: { status: 'active' },
+      select: {
+        id: true,
+        title: true,
+        startedAt: true,
+        endsAt: true,
+      },
+    });
 
-    let depositBalance = 0;
-    let completedIds = [];
-    let totalRewards = 0;
-
-    if (session) {
-      const user = await prisma.user.findUnique({
-        where: { id: session.userId },
-        select: { totalDeposited: true },
+    // ⚠️ إذا لا يوجد مستخدم → أعد المهمة فقط
+    if (!session) {
+      return NextResponse.json({
+        mission: mission || null,
+        depositBalance: 0,
+        completed: false,
+        totalRewards: 0,
+        percent: 2,
       });
-
-      if (user) {
-        depositBalance = user.totalDeposited || 0;
-      }
-
-      const completions = await prisma.missionCompletion.findMany({
-        where: { userId: session.userId },
-      });
-
-      completedIds = completions.map((c) => c.missionId);
-      totalRewards = completions.reduce((sum, c) => sum + c.reward, 0);
     }
 
+    // بيانات المستخدم
+    const user = await prisma.user.findUnique({
+      where: { id: session.userId },
+      select: { totalDeposited: true },
+    });
+
+    const depositBalance = user?.totalDeposited || 0;
+
+    // هل أكمل المستخدم هذه المهمة؟
+    let completed = false;
+    if (mission) {
+      const completion = await prisma.missionCompletion.findUnique({
+        where: {
+          userId_missionId: {
+            userId: session.userId,
+            missionId: mission.id,
+          },
+        },
+      });
+      completed = !!completion;
+    }
+
+    // إجمالي المكافآت
+    const completions = await prisma.missionCompletion.findMany({
+      where: { userId: session.userId },
+      select: { reward: true },
+    });
+
+    const totalRewards = completions.reduce((sum, c) => sum + c.reward, 0);
+
     return NextResponse.json({
-      missions,
+      mission: mission || null,
       depositBalance,
-      completedIds,
+      completed,
       totalRewards,
       percent: 2,
     });
   } catch (error) {
     console.error('🔥 User missions error:', error);
-    console.error('  message:', error.message);
-    console.error('  code:', error.code);
-    return NextResponse.json(
-      {
-        missions: [],
-        depositBalance: 0,
-        completedIds: [],
-        totalRewards: 0,
-        error: error.message,
-      },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      mission: null,
+      depositBalance: 0,
+      completed: false,
+      totalRewards: 0,
+      percent: 2,
+    });
   }
 }
