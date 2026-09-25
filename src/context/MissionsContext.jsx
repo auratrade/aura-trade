@@ -1,4 +1,5 @@
 'use client';
+
 import {
   createContext,
   useContext,
@@ -17,69 +18,147 @@ export function MissionsProvider({ children }) {
   const [percent, setPercent] = useState(2);
   const [loading, setLoading] = useState(true);
 
-  // ============ جلب المهمة الحالية ============
+  // سجل المهام
+  const [missionHistory, setMissionHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  // ==========================================
+  // جلب المهمة الحالية
+  // ==========================================
+
   const loadMission = useCallback(async () => {
     try {
       const res = await fetch('/api/user/missions');
+
       if (res.ok) {
         const data = await res.json();
+
         setMission(data.mission || null);
         setDepositBalance(data.depositBalance || 0);
         setCompleted(data.completed || false);
         setTotalRewards(data.totalRewards || 0);
         setPercent(data.percent || 2);
       }
-    } catch (e) {
-      console.error('Load mission error:', e);
+    } catch (error) {
+      console.error('Load mission error:', error);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // ============ تحميل أولي ============
-  useEffect(() => {
-    loadMission();
-  }, [loadMission]);
+  // ==========================================
+  // جلب سجل المهام
+  // ==========================================
 
-  // ============ تحديث دوري كل 30 ثانية ============
-  useEffect(() => {
-    const iv = setInterval(loadMission, 30000);
-    return () => clearInterval(iv);
-  }, [loadMission]);
+  const loadMissionHistory = useCallback(async () => {
+    try {
+      setHistoryLoading(true);
 
-  // ============ إكمال المهمة ============
-  const completeMission = useCallback(async (missionId) => {
-    const res = await fetch('/api/user/missions/complete', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ missionId }),
-    });
+      const res = await fetch('/api/user/missions/history');
 
-    const data = await res.json();
+      if (!res.ok) {
+        return;
+      }
 
-    if (!res.ok) {
-      throw new Error(data.error || 'فشل إكمال المهمة');
+      const data = await res.json();
+
+      setMissionHistory(data.history || []);
+    } catch (error) {
+      console.error('Load mission history error:', error);
+    } finally {
+      setHistoryLoading(false);
     }
-
-    // ✅ تحديث الحالة
-    setCompleted(true);
-    setTotalRewards((prev) => prev + data.reward);
-
-    return data;
   }, []);
 
-  // ============ المكافأة لكل مهمة ============
-  const rewardPerMission = (depositBalance * percent) / 100;
+  // ==========================================
+  // التحميل الأولي
+  // ==========================================
 
-  // ============ هل يمكن إكمال المهمة؟ ============
-  const canComplete = mission && !completed && depositBalance > 0;
+  useEffect(() => {
+    loadMission();
+    loadMissionHistory();
+  }, [loadMission, loadMissionHistory]);
 
-  // ============ هل انتهت المهمة؟ ============
-  const isExpired = mission ? new Date() > new Date(mission.endsAt) : false;
+  // ==========================================
+  // تحديث دوري
+  // ==========================================
+
+  useEffect(() => {
+    const iv = setInterval(() => {
+      loadMission();
+      loadMissionHistory();
+    }, 30000);
+
+    return () => clearInterval(iv);
+  }, [loadMission, loadMissionHistory]);
+
+  // ==========================================
+  // إكمال المهمة
+  // ==========================================
+
+  const completeMission = useCallback(
+    async (missionId) => {
+      const res = await fetch('/api/user/missions/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          missionId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(
+          data.error || 'فشل إكمال المهمة'
+        );
+      }
+
+      // تحديث الحالة الحالية
+      setCompleted(true);
+
+      setTotalRewards(
+        (prev) => prev + data.reward
+      );
+
+      // تحديث سجل المهام مباشرة
+      await loadMissionHistory();
+
+      return data;
+    },
+    [loadMissionHistory]
+  );
+
+  // ==========================================
+  // المكافأة
+  // ==========================================
+
+  const rewardPerMission =
+    (depositBalance * percent) / 100;
+
+  // ==========================================
+  // هل يمكن إكمال المهمة؟
+  // ==========================================
+
+  const canComplete =
+    mission &&
+    !completed &&
+    depositBalance > 0;
+
+  // ==========================================
+  // هل انتهت المهمة؟
+  // ==========================================
+
+  const isExpired = mission
+    ? new Date() > new Date(mission.endsAt)
+    : false;
 
   return (
     <MissionsContext.Provider
       value={{
+        // المهمة الحالية
         mission,
         depositBalance,
         completed,
@@ -89,8 +168,15 @@ export function MissionsProvider({ children }) {
         loading,
         canComplete,
         isExpired,
+
+        // سجل المهام
+        missionHistory,
+        historyLoading,
+
+        // Functions
         completeMission,
         refresh: loadMission,
+        refreshHistory: loadMissionHistory,
       }}
     >
       {children}
@@ -100,6 +186,12 @@ export function MissionsProvider({ children }) {
 
 export const useMissions = () => {
   const ctx = useContext(MissionsContext);
-  if (!ctx) throw new Error('useMissions must be used within MissionsProvider');
+
+  if (!ctx) {
+    throw new Error(
+      'useMissions must be used within MissionsProvider'
+    );
+  }
+
   return ctx;
 };
