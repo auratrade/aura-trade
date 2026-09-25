@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: '/admin/users', label: 'المستخدمون', icon: Users },
   { href: '/admin/deposits', label: 'الإيداعات', icon: ArrowDownToLine, badge: 'new' },
   { href: '/admin/withdrawals', label: 'السحوبات', icon: ArrowUpFromLine, badge: 'new' },
+   { href: '/admin/verifications', label: 'التحقق من الهوية', icon: Shield },
   { href: '/admin/notifications', label: 'الإشعارات', icon: Bell },
   { href: '/admin/activity', label: 'سجل العمليات', icon: Activity },
   { href: '/admin/settings', label: 'الإعدادات', icon: Settings },

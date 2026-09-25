@@ -386,3 +386,22 @@ model UserNotification {
   @@index([isRead])
   @@map("user_notifications")
 }
+
+model IdentityVerification {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  idType          String   // national_id | residence | passport
+  frontImage      String   @db.Text  // Base64
+  backImage       String?  @db.Text  // Base64 (null للجواز)
+  selfieImage     String   @db.Text  // Base64
+  status          String   @default("pending") // pending | approved | rejected
+  reason          String?  // سبب الرفض
+  reviewedBy      String?  // adminId
+  reviewedAt      DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([userId])
+  @@map("identity_verifications")
+}

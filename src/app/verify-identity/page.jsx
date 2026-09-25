@@ -75,54 +75,49 @@ const { confirm } = useConfirm();
   };
 
   // ============ إنشاء الحساب بعد التحقق ============
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
 
-  if (!frontImage) {
-    toast.warning('الرجاء رفع الصورة الأمامية للهوية');
-    return;
-  }
-  if (idType !== 'passport' && !backImage) {
-    toast.warning('الرجاء رفع الصورة الخلفية للهوية');
-    return;
-  }
-  if (!selfieImage) {
-    toast.warning('الرجاء رفع صورة شخصية (سيلفي)');
-    return;
-  }
-  if (!agree) {
-    toast.warning('يجب الموافقة على الشروط');
-    return;
-  }
+  // التحقق
+  if (!frontImage) { setError('الرجاء رفع الصورة الأمامية'); return; }
+  if (idType !== 'passport' && !backImage) { setError('الرجاء رفع الصورة الخلفية'); return; }
+  if (!selfieImage) { setError('الرجاء رفع صورة سيلفي'); return; }
+  if (!agree) { setError('يجب الموافقة على الشروط'); return; }
 
   setLoading(true);
 
   try {
-    await new Promise((r) => setTimeout(r, 1800));
-
-    const newUser = await registerFromPending({
+    // 1) أنشئ الحساب (إذا لم يكن موجوداً)
+    await registerFromPending({
       identityType: idType,
-      identityVerified: true,
+      identityVerified: false,  // ⚠️ لم يُوثَّق بعد
     });
 
-    toast.success('تم إنشاء حسابك بنجاح! جاري التحويل...');
+    // 2) أرسل الصور
+    const res = await fetch('/api/user/verify-identity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        idType,
+        frontImage: frontImage.preview,
+        backImage: backImage?.preview || null,
+        selfieImage: selfieImage.preview,
+      }),
+    });
 
-    localStorage.setItem(
-      'aura-identity-verified',
-      JSON.stringify({
-        userId: newUser.id,
-        verifiedAt: new Date().toISOString(),
-        type: idType,
-      })
-    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'فشل إرسال الطلب');
 
+    console.log('✅ Verification submitted');
     setStep(3);
-    setTimeout(() => router.push('/dashboard'), 2500);
+
+    setTimeout(() => {
+      router.push('/dashboard');
+    }, 3000);
   } catch (err) {
-    console.error('🔴 Error:', err);
-    toast.error(err.message || 'حدث خطأ أثناء إنشاء الحساب');
-    setError(err.message || 'حدث خطأ أثناء إنشاء الحساب');
+    console.error('🔥 Verify error:', err);
+    setError(err.message);
     setLoading(false);
   }
 };
@@ -352,9 +347,10 @@ const { confirm } = useConfirm();
               </div>
               <h1 className={styles.successTitle}>تم إرسال طلبك بنجاح!</h1>
               <p className={styles.successDesc}>
-                شكراً لك، تم استلام وثائقك. سيتم التحقق منها خلال
-                5-30 دقيقة وسنُعلمك بالنتيجة.
-              </p>
+  شكراً لك! تم استلام وثائقك. <br />
+  <b>سيتم مراجعتها من قبل الإدارة خلال 24 ساعة.</b><br />
+  يمكنك استخدام المنصة الآن، لكن بعض الميزات ستبقى محدودة حتى الموافقة.
+</p>
 
               <div className={styles.successInfo}>
                 <Sparkles size={16} />
