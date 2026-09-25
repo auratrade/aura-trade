@@ -9,39 +9,37 @@ import { ConfirmProvider } from '@/context/ConfirmContext';
 import { AdminProvider } from '@/context/AdminContext';
 
 export const metadata = {
-  title: 'AURA TRADE & INVEST | منصة التداول والاستثمار',
+  title: 'AURA TRADE & INVEST',
   description: 'منصة تداول واستثمار مالي احترافية',
-  icons: {
-    icon: [
-      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
-      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
-      { url: '/favicon.ico', sizes: 'any' },
-    ],
-    apple: [
-      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
-    ],
-    other: [
-      { rel: 'android-chrome-192x192', url: '/android-chrome-192x192.png', sizes: '192x192' },
-      { rel: 'android-chrome-512x512', url: '/android-chrome-512x512.png', sizes: '512x512' },
-    ],
+  robots: {
+    index: false,
+    follow: false,
   },
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="ar" dir="rtl" suppressHydrationWarning>
-      <body>
+      <head>
+        <meta name="google" content="notranslate" />
+      </head>
+      <body suppressHydrationWarning>
         <ThemeProvider>
           <ToastProvider>
             <ConfirmProvider>
               <AuthProvider>
                 <AdminProvider>
                   <MissionsProvider>
-                    <Header />
-                    <main style={{ minHeight: 'calc(100vh - 200px)' }}>
+                    {/* ⚠️ لا يوجد Header في الأعلى */}
+
+                    <main className="main-content">
                       {children}
                     </main>
+
                     <Footer />
+
+                    {/* ✅ Bottom Navigation */}
+                    <Header />
                   </MissionsProvider>
                 </AdminProvider>
               </AuthProvider>

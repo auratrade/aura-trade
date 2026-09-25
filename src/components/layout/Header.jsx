@@ -1,25 +1,32 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import {
   Bell, CheckCheck, Crown, Wallet, Info, Gift,
   LayoutDashboard, Target, ArrowDownToLine, ArrowUpFromLine,
-  Users, Shield, Moon, Sun, User, Menu, X, LogOut,
+  Users, Shield, Moon, Sun, User, X, LogOut,
+  MoreHorizontal, Settings
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import styles from './Header.module.css';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
 
-const NAV_LINKS = [
-  { href: '/dashboard', label: 'نظرة عامة', icon: LayoutDashboard },
+// ============ روابط التنقل الأساسية (تظهر في الأسفل) ============
+const PRIMARY_LINKS = [
+  { href: '/dashboard', label: 'الرئيسية', icon: LayoutDashboard },
   { href: '/missions', label: 'المهام', icon: Target },
   { href: '/deposit', label: 'إيداع', icon: ArrowDownToLine },
   { href: '/withdraw', label: 'سحب', icon: ArrowUpFromLine },
   { href: '/referrals', label: 'الإحالات', icon: Users },
+];
+
+// ============ روابط ثانوية (في قائمة المزيد) ============
+const MORE_LINKS = [
   { href: '/security', label: 'الأمان', icon: Shield },
+  { href: '/settings', label: 'الإعدادات', icon: Settings },
 ];
 
 // ============ Icons Map ============
@@ -31,7 +38,6 @@ const NOTIF_ICONS = {
   bell: Bell,
 };
 
-// ============ Priority Colors ============
 const PRIORITY_COLORS = {
   low: '#7d8aab',
   normal: '#22d3ee',
@@ -39,7 +45,6 @@ const PRIORITY_COLORS = {
   urgent: '#ea3943',
 };
 
-// ============ Format Relative Time ============
 function formatRelativeTime(date) {
   const now = new Date();
   const d = new Date(date);
@@ -59,12 +64,16 @@ export default function Header() {
   const toast = useToast();
   const { confirm } = useConfirm();
 
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
   const [showUser, setShowUser] = useState(false);
+  const [showMore, setShowMore] = useState(false);
 
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const notifRef = useRef(null);
+  const userRef = useRef(null);
+  const moreRef = useRef(null);
 
   // ============ جلب الإشعارات ============
   useEffect(() => {
@@ -74,6 +83,29 @@ export default function Header() {
       return () => clearInterval(iv);
     }
   }, [user]);
+
+  // ============ إغلاق القوائم عند النقر خارجها ============
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (showNotif && notifRef.current && !notifRef.current.contains(event.target)) {
+        setShowNotif(false);
+      }
+      if (showUser && userRef.current && !userRef.current.contains(event.target)) {
+        setShowUser(false);
+      }
+      if (showMore && moreRef.current && !moreRef.current.contains(event.target)) {
+        setShowMore(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [showNotif, showUser, showMore]);
 
   async function loadNotifs() {
     try {
@@ -86,7 +118,6 @@ export default function Header() {
     } catch {}
   }
 
-  // ============ تعليم إشعار واحد كمقروء ============
   async function markRead(id) {
     try {
       await fetch('/api/user/notifications/read', {
@@ -94,7 +125,6 @@ export default function Header() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id }),
       });
-
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
@@ -102,7 +132,6 @@ export default function Header() {
     } catch {}
   }
 
-  // ============ تعليم الكل كمقروء ============
   async function markAllRead() {
     try {
       await fetch('/api/user/notifications', { method: 'POST' });
@@ -111,83 +140,93 @@ export default function Header() {
     } catch {}
   }
 
-  // ============ فتح الإشعار ============
   function handleNotifClick(notif) {
     if (!notif.isRead) markRead(notif.id);
-
     if (notif.actionUrl) {
       window.location.href = notif.actionUrl;
     }
   }
 
   return (
-    <header className={styles.header}>
-      <div className={`${styles.inner} container`}>
-        <div className={styles.brand}>
-  <div className={styles.logo}>
-    <img
-      src="/logo.jpg"
-      alt="AURA TRADE"
-      className={styles.logoImg}
-    />
-  </div>
-  <div className={styles.brandText}>
-    <div className={styles.brandName}>AURA TRADE</div>
-    <div className={styles.brandSub}>& INVEST</div>
-  </div>
-</div>
-
-        <nav className={`${styles.nav} ${mobileOpen ? styles.navOpen : ''}`}>
-          {NAV_LINKS.map(({ href, label, icon: Icon }) => {
+    <>
+      {/* ============ Bottom Navigation Bar ============ */}
+      <nav className={styles.bottomNav}>
+        <div className={styles.navInner}>
+          {/* ============ PRIMARY LINKS ============ */}
+          {PRIMARY_LINKS.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
               <Link
                 key={href}
                 href={href}
-                className={`${styles.navLink} ${active ? styles.active : ''}`}
-                onClick={() => setMobileOpen(false)}
+                className={`${styles.navItem} ${active ? styles.activeItem : ''}`}
               >
-                <Icon size={16} />
-                <span>{label}</span>
+                <div className={styles.navIconWrap}>
+                  <Icon size={20} />
+                  {active && <span className={styles.activeDot} />}
+                </div>
+                <span className={styles.navLabel}>{label}</span>
               </Link>
             );
           })}
-        </nav>
 
-        <div className={styles.actions}>
-          {/* زر تبديل المظهر */}
-          <button
-            className={styles.iconBtn}
-            aria-label="تبديل المظهر"
-            title={theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
-            onClick={toggle}
-            type="button"
-          >
-            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
-
-          {/* ============ الإشعارات ============ */}
-          <div className={styles.dropdownWrap}>
+          {/* ============ MORE MENU ============ */}
+          <div className={styles.dropdownWrap} ref={moreRef}>
             <button
-              className={styles.iconBtn}
-              aria-label="الإشعارات"
+              className={styles.navItem}
               onClick={() => {
-                setShowNotif(!showNotif);
+                setShowMore(!showMore);
                 setShowUser(false);
+                setShowNotif(false);
               }}
               type="button"
             >
-              <Bell size={18} />
-              {unreadCount > 0 && (
-                <span className={styles.badge}>
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
+              <div className={styles.navIconWrap}>
+                <MoreHorizontal size={20} />
+              </div>
+              <span className={styles.navLabel}>المزيد</span>
+            </button>
+
+            {showMore && (
+              <div className={`${styles.dropdown} ${styles.moreDropdown}`}>
+                {MORE_LINKS.map(({ href, label, icon: Icon }) => (
+                  <Link
+                    key={href}
+                    href={href}
+                    className={styles.dropdownItem}
+                    onClick={() => setShowMore(false)}
+                  >
+                    <Icon size={16} /> {label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* ============ NOTIFICATIONS ============ */}
+          <div className={styles.dropdownWrap} ref={notifRef}>
+            <button
+              className={styles.navItem}
+              onClick={() => {
+                setShowNotif(!showNotif);
+                setShowUser(false);
+                setShowMore(false);
+              }}
+              type="button"
+            >
+              <div className={styles.navIconWrap}>
+                <Bell size={20} />
+                {unreadCount > 0 && (
+                  <span className={styles.badge}>
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </div>
+              <span className={styles.navLabel}>الإشعارات</span>
             </button>
 
             {showNotif && (
               <div className={`${styles.dropdown} ${styles.notifDropdown}`}>
-                {/* رأس القائمة */}
                 <div className={styles.notifHead}>
                   <span>الإشعارات</span>
                   {unreadCount > 0 && (
@@ -196,12 +235,11 @@ export default function Header() {
                       onClick={markAllRead}
                       type="button"
                     >
-                      <CheckCheck size={12} /> تعليم الكل كمقروء
+                      <CheckCheck size={12} /> تعليم الكل
                     </button>
                   )}
                 </div>
 
-                {/* القائمة */}
                 {notifications.length === 0 ? (
                   <div className={styles.emptyNotif}>
                     <Bell size={24} />
@@ -220,8 +258,6 @@ export default function Header() {
                             !n.isRead ? styles.unreadNotif : ''
                           }`}
                           onClick={() => handleNotifClick(n)}
-                          role="button"
-                          tabIndex={0}
                         >
                           <div
                             className={styles.notifIcon}
@@ -239,9 +275,7 @@ export default function Header() {
                               {formatRelativeTime(n.createdAt)}
                             </div>
                           </div>
-                          {!n.isRead && (
-                            <span className={styles.unreadDot} />
-                          )}
+                          {!n.isRead && <span className={styles.unreadDot} />}
                         </div>
                       );
                     })}
@@ -251,34 +285,44 @@ export default function Header() {
             )}
           </div>
 
-          {/* ============ بطاقة المستخدم ============ */}
-          <div className={styles.dropdownWrap}>
+          {/* ============ USER MENU ============ */}
+          <div className={styles.dropdownWrap} ref={userRef}>
             <button
-              className={styles.userBtn}
+              className={styles.navItem}
               onClick={() => {
                 setShowUser(!showUser);
                 setShowNotif(false);
+                setShowMore(false);
               }}
               type="button"
             >
-              <div className={styles.avatar}>
+              <div className={styles.userAvatar}>
                 {user?.username?.slice(0, 2).toUpperCase() || 'AV'}
               </div>
-              <div className={styles.userInfo}>
-                <div className={styles.userName}>
-                  {user?.fullName || user?.username || 'مستخدم'}
-                </div>
-                <div className={styles.userRole}>
-                  {user?.accountLevel === 0 && 'مبتدئ'}
-                  {user?.accountLevel === 1 && 'مستوى 1'}
-                  {user?.accountLevel === 2 && 'مستوى 2'}
-                  {user?.accountLevel === 3 && 'مستوى 3'}
-                </div>
-              </div>
+              <span className={styles.navLabel}>
+                {user?.username?.slice(0, 8) || 'حسابي'}
+              </span>
             </button>
 
             {showUser && (
-              <div className={styles.dropdown}>
+              <div className={`${styles.dropdown} ${styles.userDropdown}`}>
+                <div className={styles.userHead}>
+                  <div className={styles.userHeadAvatar}>
+                    {user?.username?.slice(0, 2).toUpperCase() || 'AV'}
+                  </div>
+                  <div>
+                    <div className={styles.userHeadName}>
+                      {user?.fullName || user?.username || 'مستخدم'}
+                    </div>
+                    <div className={styles.userHeadRole}>
+                      {user?.accountLevel === 0 && 'مبتدئ'}
+                      {user?.accountLevel === 1 && 'مستوى 1'}
+                      {user?.accountLevel === 2 && 'مستوى 2'}
+                      {user?.accountLevel === 3 && 'مستوى 3'}
+                    </div>
+                  </div>
+                </div>
+
                 <Link
                   href="/settings"
                   className={styles.dropdownItem}
@@ -300,21 +344,37 @@ export default function Header() {
                 >
                   <Shield size={14} /> الأمان
                 </Link>
+
                 <div className={styles.dropdownDivider} />
+
+                <button
+                  className={styles.dropdownItem}
+                  onClick={() => {
+                    toggle();
+                    setShowUser(false);
+                  }}
+                  type="button"
+                >
+                  {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+                  {theme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن'}
+                </button>
+
+                <div className={styles.dropdownDivider} />
+
                 <button
                   className={`${styles.dropdownItem} ${styles.danger}`}
                   type="button"
                   onClick={async () => {
                     const ok = await confirm({
                       title: 'تسجيل الخروج',
-                      message: 'هل أنت متأكد من تسجيل الخروج من حسابك؟',
+                      message: 'هل أنت متأكد من تسجيل الخروج؟',
                       confirmText: 'تسجيل الخروج',
                       cancelText: 'إلغاء',
                       type: 'danger',
                     });
                     if (ok) {
                       await logout();
-                      toast.success('تم تسجيل الخروج بنجاح');
+                      toast.success('تم تسجيل الخروج');
                     }
                   }}
                 >
@@ -323,17 +383,8 @@ export default function Header() {
               </div>
             )}
           </div>
-
-          <button
-            className={styles.mobileToggle}
-            aria-label="القائمة"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            type="button"
-          >
-            {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
-      </div>
-    </header>
+      </nav>
+    </>
   );
 }

@@ -360,23 +360,7 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
                 </small>
               </label>
 
-              {/* إثبات */}
-              <label className={styles.field}>
-                <span>إثبات التحويل (صورة) — اختياري</span>
-                <div className={styles.fileWrap}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setDepProof(e.target.files[0])}
-                    id="proof-upload"
-                    style={{ display: 'none' }}
-                  />
-                  <label htmlFor="proof-upload" className={styles.fileBtn}>
-                    <Upload size={14} />
-                    {depProof ? depProof.name : 'اختر صورة الإيصال'}
-                  </label>
-                </div>
-              </label>
+            
 
               {/* Submit */}
               <button
