@@ -322,6 +322,13 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
                 </small>
               </label>
 
+
+                    <div className={styles.notice} style={{ background: 'rgba(245, 176, 65, 0.1)', borderColor: 'rgba(245, 176, 65, 0.3)' }}>
+  <AlertTriangle size={16} />
+  <div>
+    <b>ملاحظة:</b> يمكنك سحب أرباحك فقط (من المهام، الإحالات، الرواتب). رأس المال المُودع لا يمكن سحبه.
+  </div>
+</div>
               {/* المبلغ */}
               <label className={styles.field}>
                 <span>المبلغ المُحوَّل (USDT)</span>
@@ -456,25 +463,24 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
       {/* ================= WITHDRAW ================= */}
       {tab === 'withdraw' && (
         <>
-          <div className={styles.balanceBox}>
-            <div className={styles.balanceItem}>
-              <span>الرصيد المتاح</span>
-              <b className="mono text-green">
-                ${user?.availableBalance?.toFixed(2) || '0.00'} USDT
-              </b>
-            </div>
-            <div className={styles.balanceItem}>
-              <span>قيد السحب</span>
-              <b className="mono">
-                ${user?.lockedBalance?.toFixed(2) || '0.00'} USDT
-              </b>
-            </div>
-            <div className={styles.balanceItem}>
-              <span>رسوم السحب</span>
-              <b className="mono">{binanceWallet.withdrawFee} USDT</b>
-            </div>
-          </div>
-
+        <div className={styles.balanceBox}>
+  <div className={styles.balanceItem}>
+    <span>الرصيد القابل للسحب</span>
+    <b className="mono text-green">
+      ${user?.withdrawableBalance?.toFixed(2) || '0.00'} USDT
+    </b>
+  </div>
+  <div className={styles.balanceItem}>
+    <span>قيد السحب</span>
+    <b className="mono">
+      ${user?.lockedBalance?.toFixed(2) || '0.00'} USDT
+    </b>
+  </div>
+  <div className={styles.balanceItem}>
+    <span>رسوم السحب</span>
+    <b className="mono">{binanceWallet.withdrawFee} USDT</b>
+  </div>
+</div>
           {/* اختيار الشبكة للسحب */}
           <div className={styles.networkSection}>
             <div className={styles.networkLabel}>

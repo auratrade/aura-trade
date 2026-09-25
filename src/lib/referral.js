@@ -128,14 +128,15 @@ export async function processReferral(newUserId, referrerCode) {
     // ✅ 8b) أضف المكافأة إلى الرصيد مباشرة + سجل في earnings
     await prisma.$transaction(async (tx) => {
       await tx.user.update({
-        where: { id: referrer.id },
-        data: {
-          availableBalance: { increment: newTier.bonus },
-          totalProfit: { increment: newTier.bonus },
-          totalBonusEarned: { increment: newTier.bonus },
-          totalValue: { increment: newTier.bonus },
-        },
-      });
+  where: { id: referrer.id },
+  data: {
+    availableBalance: { increment: newTier.bonus },
+    withdrawableBalance: { increment: newTier.bonus },   // ✅ جديد
+    totalProfit: { increment: newTier.bonus },
+    totalBonusEarned: { increment: newTier.bonus },
+    totalValue: { increment: newTier.bonus },
+  },
+});
 
       await tx.earning.create({
         data: {

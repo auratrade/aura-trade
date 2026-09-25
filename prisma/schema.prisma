@@ -33,6 +33,7 @@ model User {
   referralCode  String   @unique
   referredBy    String?
   isVerified    Boolean  @default(false)
+  withdrawableBalance Float @default(0)
 
   // الأرصدة
   availableBalance Float  @default(0)

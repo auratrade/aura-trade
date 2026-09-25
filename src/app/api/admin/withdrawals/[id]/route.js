@@ -65,13 +65,14 @@ export async function POST(request, { params }) {
         });
 
         // اخصم من الرصيد المقفل
-        await prismaTx.user.update({
-          where: { id: tx.userId },
-          data: {
-            lockedBalance: { decrement: totalLocked },
-            totalWithdrawn: { increment: tx.amount },
-          },
-        });
+       await prismaTx.user.update({
+  where: { id: tx.userId },
+  data: {
+    availableBalance: { increment: totalLocked },
+    withdrawableBalance: { increment: totalLocked },   // ✅ جديد
+    lockedBalance: { decrement: totalLocked },
+  },
+});
       });
 
       await updateUserBalances(tx.userId);

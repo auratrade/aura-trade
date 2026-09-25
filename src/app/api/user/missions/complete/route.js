@@ -95,18 +95,14 @@ export async function POST(request) {
       });
 
       // أضف الرصيد
-      const updatedUser = await tx.user.update({
-        where: { id: session.userId },
-        data: {
-          availableBalance: { increment: reward },
-          totalProfit: { increment: reward },
-        },
-        select: {
-          availableBalance: true,
-          totalProfit: true,
-        },
-      });
-
+     const updatedUser = await tx.user.update({
+  where: { id: session.userId },
+  data: {
+    availableBalance: { increment: reward },
+    withdrawableBalance: { increment: reward },  // ✅ جديد
+    totalProfit: { increment: reward },
+  },
+});
       // سجل في earnings
       await tx.earning.create({
         data: {

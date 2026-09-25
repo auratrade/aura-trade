@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import { notifyAdmin } from '@/lib/admin-auth';
 
 const MIN_WITHDRAW = 20;
 const FEE = 1;
@@ -16,7 +15,7 @@ export async function POST(request) {
     const body = await request.json();
     const { amount, network, address, pin } = body;
 
-    // التحقق
+    // ============ التحقق من المدخلات ============
     if (!amount || amount < MIN_WITHDRAW) {
       return NextResponse.json(
         { error: `الحد الأدنى للسحب ${MIN_WITHDRAW} USDT` },
@@ -36,26 +35,30 @@ export async function POST(request) {
       );
     }
 
-    // جلب المستخدم
+    // ============ جلب المستخدم ============
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
       select: {
         availableBalance: true,
         lockedBalance: true,
+        withdrawableBalance: true,   // ✅ جديد
         username: true,
       },
     });
 
-    // تحقق من الرصيد
+    // ============ التحقق من الرصيد القابل للسحب ============
     const totalNeeded = parseFloat(amount) + FEE;
-    if (user.availableBalance < totalNeeded) {
+
+    if (user.withdrawableBalance < totalNeeded) {
       return NextResponse.json(
-        { error: 'الرصيد غير كافٍ' },
+        {
+          error: `الرصيد القابل للسحب غير كافٍ. المتاح: $${user.withdrawableBalance.toFixed(2)} USDT. الرصيد المُودع (رأس المال) غير قابل للسحب.`,
+        },
         { status: 400 }
       );
     }
 
-    // تحقق من عدم وجود طلب سحب معلّق
+    // ============ التحقق من عدم وجود طلب معلّق ============
     const pendingWithdraw = await prisma.transaction.findFirst({
       where: {
         userId: session.userId,
@@ -71,13 +74,14 @@ export async function POST(request) {
       );
     }
 
-    // إنشاء المعاملة + قفل المبلغ
+    // ============ إنشاء المعاملة ============
     const transaction = await prisma.$transaction(async (tx) => {
-      // احجز المبلغ (انقله إلى lockedBalance)
+      // انقل المبلغ من الأرباح إلى lockedBalance
       await tx.user.update({
         where: { id: session.userId },
         data: {
           availableBalance: { decrement: totalNeeded },
+          withdrawableBalance: { decrement: totalNeeded },   // ✅ جديد
           lockedBalance: { increment: totalNeeded },
         },
       });
@@ -96,14 +100,20 @@ export async function POST(request) {
       });
     });
 
-    // إشعار الأدمن
-    await notifyAdmin({
-      type: 'withdraw',
-      title: 'طلب سحب جديد',
-      message: `المستخدم ${user.username} طلب سحب $${amount} USDT إلى ${address.slice(0, 10)}...`,
-      referenceId: transaction.id,
-      priority: 'high',
-    });
+    // ============ إشعار الأدمن ============
+    try {
+      await prisma.adminNotification.create({
+        data: {
+          type: 'withdraw',
+          title: 'طلب سحب جديد',
+          message: `المستخدم ${user.username} طلب سحب $${amount} USDT إلى ${address.slice(0, 10)}...`,
+          referenceId: transaction.id,
+          priority: 'high',
+        },
+      });
+    } catch (e) {
+      console.error('Notification error:', e);
+    }
 
     return NextResponse.json({
       success: true,

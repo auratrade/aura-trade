@@ -262,7 +262,7 @@ export const binanceWallet = {
 
   minDeposit: 10,
   minWithdraw: 20,
-  withdrawFee: 1,
+  withdrawFee: 0,
 
   warning: 'يجب إرسال USDT على الشبكة المختارة فقط. أي شبكة أخرى تعني فقدان الأموال.',
 
