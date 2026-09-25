@@ -52,9 +52,13 @@ export async function setAdminCookie(token) {
 export async function removeAdminCookie() {
   const cookieStore = await cookies();
   cookieStore.delete(ADMIN_COOKIE);
+  cookieStore.delete('aura_admin_slug');
 }
 
 // ============ جلب الأدمن الحالي ============
+// ✅ التحقق الآن يعتمد فقط على صلاحية الـ JWT + حالة الحساب،
+//    بنفس منطق middleware.js تمامًا — بدون اشتراط سجل adminSession،
+//    عشان ما يصير تضارب بين الطبقتين وينتج عنه redirect loop.
 export async function getCurrentAdmin() {
   const cookieStore = await cookies();
   const token = cookieStore.get(ADMIN_COOKIE)?.value;
@@ -63,34 +67,23 @@ export async function getCurrentAdmin() {
   const payload = await verifyAdminToken(token);
   if (!payload?.adminId) return null;
 
-  // تحقق من الجلسة في DB
-  const session = await prisma.adminSession.findUnique({
-    where: { token },
-    include: {
-      admin: {
-        select: {
-          id: true,
-          email: true,
-          username: true,
-          fullName: true,
-          role: true,
-          isActive: true,
-        },
-      },
+  const admin = await prisma.admin.findUnique({
+    where: { id: payload.adminId },
+    select: {
+      id: true,
+      email: true,
+      username: true,
+      fullName: true,
+      role: true,
+      isActive: true,
     },
   });
 
-  if (!session) return null;
-  if (new Date() > session.expiresAt) {
-    await prisma.adminSession.delete({ where: { id: session.id } });
-    return null;
-  }
-  if (!session.admin.isActive) return null;
+  if (!admin || !admin.isActive) return null;
 
   return {
-    sessionId: session.id,
     token,
-    admin: session.admin,
+    admin,
   };
 }
 

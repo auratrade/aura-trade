@@ -27,9 +27,11 @@ export default function AdminDashboardBySlug() {
       if (res.ok) {
         const result = await res.json();
         setData(result);
-      } else if (res.status === 401) {
-        window.location.href = '/bilsr/alissrow';
       }
+      // ✅ ما في redirect هون. لو 401 (منتهية الصلاحية أو خطأ عابر)،
+      //    AdminContext هو المسؤول الوحيد عن اتخاذ قرار التوجيه
+      //    لصفحة تسجيل الدخول — منعًا لتضارب عدة جهات بتعمل
+      //    window.location.href بنفس الوقت وتسبب لوب.
     } catch (e) {
       console.error(e);
     } finally {
