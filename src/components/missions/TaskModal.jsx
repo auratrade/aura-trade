@@ -122,7 +122,7 @@ const handleBuy = async () => {
               <div className={styles.stockBottom}>
                 <div>
                   <span className={styles.priceLabel}>السعر الحالي</span>
-                  <div className={`${styles.price} mono`}>${mission.price.toFixed(2)}</div>
+                  <div className={`${styles.price} mono`}>${(mission.price ?? 0).toFixed(2)}</div>
                 </div>
                 <div className={`${styles.change} ${mission.up ? 'text-green' : 'text-red'}`}>
                   {mission.up ? <TrendingUp size={12} /> : <TrendingDown size={12} />}

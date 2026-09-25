@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import { prisma } from './prisma';
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'fallback-secret-change-me'
@@ -49,9 +50,29 @@ export async function removeAuthCookie() {
   cookieStore.delete(COOKIE_NAME);
 }
 
+// ✅ صار يتحقق فعليًا من وجود المستخدم بالداتابيز، مش بس من صلاحية الـ JWT.
+//    لو التوكن صالح لكن صاحبه محذوف (أو الداتابيز انعملها reset)، بيرجع null
+//    بدل ما يرجّع userId "شبحي" يسبب Foreign Key violation عند أي إنشاء سجل.
 export async function getCurrentUser() {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   if (!token) return null;
-  return verifyToken(token);
+
+  const payload = await verifyToken(token);
+  if (!payload?.userId) return null;
+
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    select: { id: true, username: true, email: true },
+  });
+
+  if (!user) return null;
+
+  // نفس شكل الإرجاع القديم (userId) حفاظًا على توافق كل الأماكن
+  // يلي بتستخدم session.userId بالمشروع، بالإضافة لبيانات المستخدم كاملة.
+  return {
+    ...payload,
+    userId: user.id,
+    user,
+  };
 }
