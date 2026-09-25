@@ -10,7 +10,7 @@
   background: rgba(10, 15, 28, 0.92);
   backdrop-filter: blur(20px);
   border-top: 1px solid var(--border-subtle);
-  padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
   transition: background 0.25s ease;
 }
 
@@ -23,10 +23,17 @@
   margin: 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  gap: 4px;
-  padding: 0 12px;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 0 6px;
+  /* ✅ لو أي شاشة أضيق من المجموع الأدنى للعناصر،
+     نسمح بالتمرير الأفقي بدل ما تتراكب/تنقص العناصر */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.navInner::-webkit-scrollbar { display: none; }
 
 /* ============================================
    NAV ITEM
@@ -36,7 +43,7 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 6px 10px;
+  padding: 6px 4px;
   border-radius: 10px;
   background: transparent;
   border: none;
@@ -44,8 +51,11 @@
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
-  min-width: 58px;
-  flex: 1;
+  /* ✅ عرض مرن بدل min-width ثابت كبير — بيصغر بانسجام
+     مع الشاشة بدل ما يفرض عرض أوسع من الشاشة نفسها */
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 84px;
 }
 
 .navItem:hover {
@@ -55,10 +65,11 @@
 
 .navIconWrap {
   position: relative;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   display: grid;
   place-items: center;
+  flex-shrink: 0;
 }
 
 .navLabel {
@@ -67,7 +78,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 70px;
+  max-width: 100%;
 }
 
 /* ============================================
@@ -97,8 +108,8 @@
    USER AVATAR
    ============================================ */
 .userAvatar {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 8px;
   background: linear-gradient(135deg, #1e3a8a, #0e7490);
   color: #fff;
@@ -116,7 +127,7 @@
 .badge {
   position: absolute;
   top: -6px;
-  right: -6px;
+  right: -8px;
   background: var(--red);
   color: #fff;
   font-size: 9px;
@@ -133,21 +144,29 @@
    ============================================ */
 .dropdownWrap {
   position: relative;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 84px;
   display: flex;
   justify-content: center;
 }
 
 /* ============================================
    DROPDOWN (opens UPWARD)
+   ✅ مثبّتة بالنسبة للشاشة (position: fixed) ومتمركزة
+   أفقيًا بعرض الفيوبورت — مش بموقع الزر — عشان ما
+   تنقص أو تطلع بره الشاشة بغض النظر وين الزر واقف
    ============================================ */
 .dropdown {
-  position: absolute;
-  bottom: calc(100% + 12px);
-  right: 50%;
-  transform: translateX(50%);
-  min-width: 260px;
-  max-width: calc(100vw - 32px);
+  position: fixed;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: min(340px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: min(420px, calc(100vh - 140px));
+  overflow-y: auto;
   background: var(--bg-elevated);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
@@ -155,17 +174,17 @@
   padding: 8px;
   z-index: 200;
   animation: slideUpFade 0.25s ease;
-  overflow: hidden;
+  box-sizing: border-box;
 }
 
 @keyframes slideUpFade {
   from {
     opacity: 0;
-    transform: translateX(50%) translateY(8px);
+    transform: translateX(-50%) translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateX(50%) translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 }
 
@@ -173,16 +192,14 @@
    MORE DROPDOWN
    ============================================ */
 .moreDropdown {
-  min-width: 180px;
-  max-width: 200px;
+  width: min(180px, calc(100vw - 24px));
 }
 
 /* ============================================
    NOTIFICATIONS DROPDOWN
    ============================================ */
 .notifDropdown {
-  min-width: 340px;
-  max-width: calc(100vw - 32px);
+  width: min(340px, calc(100vw - 24px));
   padding: 0;
 }
 
@@ -210,6 +227,7 @@
   border: none;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .markAllBtn:hover {
@@ -267,6 +285,7 @@
   font-weight: 800;
   color: var(--text-primary);
   margin-bottom: 4px;
+  overflow-wrap: break-word;
 }
 
 .notifMsg {
@@ -274,6 +293,7 @@
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 4px;
+  overflow-wrap: break-word;
 }
 
 .notifDate {
@@ -307,7 +327,7 @@
    USER DROPDOWN
    ============================================ */
 .userDropdown {
-  min-width: 240px;
+  width: min(240px, calc(100vw - 24px));
 }
 
 .userHead {
@@ -336,6 +356,7 @@
   font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
+  overflow-wrap: break-word;
 }
 
 .userHeadRole {
@@ -362,6 +383,7 @@
   cursor: pointer;
   border: none;
   background: transparent;
+  box-sizing: border-box;
 }
 
 .dropdownItem:hover {
@@ -380,17 +402,25 @@
 /* ============================================
    RESPONSIVE
    ============================================ */
+
+/* شاشات صغيرة جدًا (320-380px) */
+@media (max-width: 380px) {
+  .navInner { gap: 0; padding: 0 2px; }
+  .navItem, .dropdownWrap { max-width: none; padding: 6px 2px; }
+  .navLabel { font-size: 9px; max-width: 100%; }
+  .navIconWrap { width: 20px; height: 20px; }
+  .userAvatar { width: 20px; height: 20px; }
+  .dropdown { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
+}
+
 @media (max-width: 480px) {
-  .navLabel { font-size: 9px; max-width: 55px; }
-  .navItem { padding: 4px 6px; min-width: 50px; }
-  .notifDropdown { min-width: 300px; }
+  .notifDropdown,
+  .dropdown { width: calc(100vw - 16px); max-width: calc(100vw - 16px); }
 }
 
 @media (min-width: 900px) {
-  .bottomNav {
-    /* تثبيت في الأسفل حتى على الشاشات الكبيرة */
-  }
   .navInner {
     max-width: 800px;
+    overflow-x: visible;
   }
 }
