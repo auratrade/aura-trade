@@ -17,14 +17,8 @@ export default function AdminHeader() {
   const [notifCount, setNotifCount] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
 
-  // ============ جلب عدد الإشعارات عند التحميل والتحديث الدوري ============
   useEffect(() => {
     loadNotifCount();
-    
-    // تحديث العد كل 15 ثانية
-    const interval = setInterval(loadNotifCount, 15000);
-    
-    return () => clearInterval(interval);
   }, []);
 
   async function loadNotifCount() {
@@ -33,12 +27,8 @@ export default function AdminHeader() {
       if (res.ok) {
         const data = await res.json();
         setNotifCount(data.count || 0);
-      } else {
-        console.error('Failed to load notification count:', res.status);
       }
-    } catch (error) {
-      console.error('Error loading notification count:', error);
-    }
+    } catch {}
   }
 
   const handleLogout = async () => {
@@ -59,22 +49,6 @@ export default function AdminHeader() {
     setRefreshing(true);
     await loadNotifCount();
     setTimeout(() => setRefreshing(false), 500);
-  };
-
-  const handleNotifClick = async () => {
-    // تعليم كل الإشعارات كمقروءة عند فتح لوحة الإشعارات
-    try {
-      const res = await fetch('/api/admin/notifications', { method: 'POST' });
-      if (res.ok) {
-        setNotifCount(0);
-      } else {
-        console.error('Failed to mark all notifications as read');
-      }
-    } catch (error) {
-      console.error('Error marking notifications as read:', error);
-    }
-    
-    router.push('/admin/notifications');
   };
 
   return (
@@ -102,12 +76,12 @@ export default function AdminHeader() {
 
         <button
           className={styles.iconBtn}
-          onClick={handleNotifClick}
+          onClick={() => router.push('/admin/notifications')}
           title="الإشعارات"
         >
           <Bell size={16} />
           {notifCount > 0 && (
-            <span className={styles.notifBadge}>{notifCount > 9 ? '9+' : notifCount}</span>
+            <span className={styles.notifBadge}>{notifCount}</span>
           )}
         </button>
 

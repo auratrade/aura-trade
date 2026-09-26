@@ -1,20 +1,27 @@
 import { prisma } from './prisma';
+
 import {
   getTierFromReferrals,
   canWithdrawSalary,
-  REFERRAL_TIERS,
 } from './referral-tiers';
 
-// ============ توليد كود إحالة فريد ============
+// ============================================================
+// توليد كود إحالة فريد
+// ============================================================
+
 export async function generateUniqueReferralCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let attempts = 0;
 
   while (attempts < 10) {
     let random = '';
+
     for (let i = 0; i < 6; i++) {
-      random += chars.charAt(Math.floor(Math.random() * chars.length));
+      random += chars.charAt(
+        Math.floor(Math.random() * chars.length)
+      );
     }
+
     const code = `AURA-${random}`;
 
     const found = await prisma.user.findUnique({
@@ -23,6 +30,7 @@ export async function generateUniqueReferralCode() {
     });
 
     if (!found) return code;
+
     attempts++;
   }
 
@@ -30,39 +38,88 @@ export async function generateUniqueReferralCode() {
 }
 
 // ============================================================
-//                 معالجة إحالة جديدة (Full Flow)
+// ربط الإحالة عند التسجيل
+//
+// مهم:
+// هذه الدالة لا تحتسب الإحالة.
+// لا تزيد referralCount.
+// لا تزيد totalReferrals.
+// لا تعطي مكافأة.
+// لا ترقي المستوى.
+//
+// فقط تحفظ علاقة المستخدم بالمُحيل.
 // ============================================================
-// ============================================================
-//                 معالجة إحالة جديدة
-// ============================================================
-export async function processReferral(newUserId, referrerCode) {
-  if (!referrerCode) return { applied: false };
 
-  // 1️⃣ ابحث عن المُحيل
+export async function linkReferral(newUserId, referrerCode) {
+  if (!referrerCode) {
+    return {
+      applied: false,
+    };
+  }
+
+  // 1️⃣ البحث عن المُحيل
   const referrer = await prisma.user.findUnique({
-    where: { referralCode: referrerCode },
+    where: {
+      referralCode: referrerCode,
+    },
     select: {
       id: true,
       username: true,
-      referralCount: true,
-      referralTier: true,
-      totalReferrals: true,
-      availableBalance: true,
+      referralCode: true,
     },
   });
 
-  if (!referrer) return { applied: false, error: 'invalid_code' };
-  if (referrer.id === newUserId) {
-    return { applied: false, error: 'self_referral' };
+  if (!referrer) {
+    return {
+      applied: false,
+      error: 'invalid_code',
+    };
   }
 
-  // 2️⃣ اربط المُحال
-  await prisma.user.update({
-    where: { id: newUserId },
-    data: { referredBy: referrer.id },
+  // 2️⃣ منع الإحالة الذاتية
+  if (referrer.id === newUserId) {
+    return {
+      applied: false,
+      error: 'self_referral',
+    };
+  }
+
+  // 3️⃣ التأكد أن المستخدم لم يتم ربطه بمُحيل آخر
+  const newUser = await prisma.user.findUnique({
+    where: {
+      id: newUserId,
+    },
+    select: {
+      referredBy: true,
+    },
   });
 
-  // 3️⃣ سجل العلاقة (Level 1)
+  if (!newUser) {
+    return {
+      applied: false,
+      error: 'user_not_found',
+    };
+  }
+
+  // إذا كان مرتبطاً مسبقاً، لا نغيّر المُحيل
+  if (newUser.referredBy) {
+    return {
+      applied: false,
+      error: 'already_referred',
+    };
+  }
+
+  // 4️⃣ ربط المستخدم بالمُحيل
+  await prisma.user.update({
+    where: {
+      id: newUserId,
+    },
+    data: {
+      referredBy: referrer.id,
+    },
+  });
+
+  // 5️⃣ إنشاء علاقة Level 1
   await prisma.referralRelation.upsert({
     where: {
       referrerId_referredId: {
@@ -75,23 +132,122 @@ export async function processReferral(newUserId, referrerCode) {
       referrerId: referrer.id,
       referredId: newUserId,
       level: 1,
+      activatedAt: null,
     },
   });
 
-  // 4️⃣ سجل العلاقات للمستويات 2-4
-  await buildReferralChain(referrer.id, newUserId);
+  // 6️⃣ بناء سلسلة الإحالات للمستويات الأعلى
+  await buildReferralChain(
+    referrer.id,
+    newUserId
+  );
 
-  // 5️⃣ احسب الإحالات الجديدة
-  const newCount = referrer.totalReferrals + 1;
+  return {
+    applied: true,
+    referrer: referrer.referralCode,
+    activated: false,
+  };
+}
 
-  // 6️⃣ احسب المستوى
-  const oldTier = getTierFromReferrals(referrer.totalReferrals);
-  const newTier = getTierFromReferrals(newCount);
-  const tierChanged = oldTier.key !== newTier.key;
+// ============================================================
+// تفعيل الإحالة بعد أول إيداع مقبول
+//
+// هذه هي الدالة التي تقوم بالاحتساب الحقيقي.
+//
+// يتم استدعاؤها فقط بعد أن يصبح الإيداع completed.
+// ============================================================
 
-  // 7️⃣ حدّث المُحيل
-  await prisma.user.update({
-    where: { id: referrer.id },
+export async function activateReferral(
+  newUserId,
+  tx = prisma
+) {
+  // 1️⃣ العثور على العلاقة المباشرة
+  const relation = await tx.referralRelation.findFirst({
+    where: {
+      referredId: newUserId,
+      level: 1,
+      activatedAt: null,
+    },
+    select: {
+      id: true,
+      referrerId: true,
+      referredId: true,
+      level: true,
+    },
+  });
+
+  // لا توجد إحالة أو تم تفعيلها سابقاً
+  if (!relation) {
+    return {
+      activated: false,
+      reason: 'no_pending_referral',
+    };
+  }
+
+  // 2️⃣ نحاول حجز الإحالة بشكل ذري
+  //
+  // إذا كان هناك طلبان بنفس الوقت، واحد فقط
+  // يستطيع تغيير activatedAt من null إلى تاريخ.
+  //
+  // هذا يمنع احتساب نفس الإحالة مرتين.
+  const claim = await tx.referralRelation.updateMany({
+    where: {
+      id: relation.id,
+      activatedAt: null,
+    },
+    data: {
+      activatedAt: new Date(),
+    },
+  });
+
+  if (claim.count !== 1) {
+    return {
+      activated: false,
+      reason: 'already_activated',
+    };
+  }
+
+  // 3️⃣ جلب بيانات المُحيل بعد حجز الإحالة
+  const referrer = await tx.user.findUnique({
+    where: {
+      id: relation.referrerId,
+    },
+    select: {
+      id: true,
+      username: true,
+      referralCode: true,
+      referralCount: true,
+      referralTier: true,
+      totalReferrals: true,
+      availableBalance: true,
+      withdrawableBalance: true,
+    },
+  });
+
+  if (!referrer) {
+    throw new Error('REFERRER_NOT_FOUND');
+  }
+
+  // 4️⃣ حساب العدد الجديد
+  const newCount = (referrer.totalReferrals || 0) + 1;
+
+  // 5️⃣ حساب المستوى القديم والجديد
+  const oldTier = getTierFromReferrals(
+    referrer.totalReferrals || 0
+  );
+
+  const newTier = getTierFromReferrals(
+    newCount
+  );
+
+  const tierChanged =
+    oldTier.key !== newTier.key;
+
+  // 6️⃣ تحديث إحصائيات المُحيل
+  await tx.user.update({
+    where: {
+      id: referrer.id,
+    },
     data: {
       totalReferrals: newCount,
       referralCount: newCount,
@@ -100,135 +256,190 @@ export async function processReferral(newUserId, referrerCode) {
   });
 
   // ============================================================
-  //   8️⃣ ترقية المستوى → مكافأة + إشعار
+  // 7️⃣ مكافأة الترقية
   // ============================================================
+
   let bonusAdded = 0;
 
-  if (tierChanged && newTier.bonus > 0) {
-    // ✅ 8a) أنشئ سجل المكافأة
-    try {
-      await prisma.referralBonus.upsert({
-        where: {
-          userId_tier: { userId: referrer.id, tier: newTier.key },
-        },
-        update: {},
-        create: {
+  if (
+    tierChanged &&
+    newTier.bonus > 0
+  ) {
+    // إنشاء سجل المكافأة
+    await tx.referralBonus.upsert({
+      where: {
+        userId_tier: {
           userId: referrer.id,
           tier: newTier.key,
-          amount: newTier.bonus,
-          milestone: newCount,
-          claimed: true,              // ✅ فوري
-          claimedAt: new Date(),
         },
-      });
-    } catch (e) {
-      console.error('Bonus create error:', e);
-    }
+      },
+      update: {},
+      create: {
+        userId: referrer.id,
+        tier: newTier.key,
+        amount: newTier.bonus,
+        milestone: newCount,
+        claimed: true,
+        claimedAt: new Date(),
+      },
+    });
 
-    // ✅ 8b) أضف المكافأة إلى الرصيد مباشرة + سجل في earnings
-    await prisma.$transaction(async (tx) => {
-      await tx.user.update({
-  where: { id: referrer.id },
-  data: {
-    availableBalance: { increment: newTier.bonus },
-    withdrawableBalance: { increment: newTier.bonus },   // ✅ جديد
-    totalProfit: { increment: newTier.bonus },
-    totalBonusEarned: { increment: newTier.bonus },
-    totalValue: { increment: newTier.bonus },
-  },
-});
-
-      await tx.earning.create({
-        data: {
-          userId: referrer.id,
-          type: 'referral',
-          amount: newTier.bonus,
-          description: `مكافأة ترقية — ${newTier.name}`,
+    // إضافة المكافأة إلى الرصيد
+    await tx.user.update({
+      where: {
+        id: referrer.id,
+      },
+      data: {
+        availableBalance: {
+          increment: newTier.bonus,
         },
-      });
+
+        withdrawableBalance: {
+          increment: newTier.bonus,
+        },
+
+        totalProfit: {
+          increment: newTier.bonus,
+        },
+
+        totalBonusEarned: {
+          increment: newTier.bonus,
+        },
+
+        totalValue: {
+          increment: newTier.bonus,
+        },
+      },
+    });
+
+    // تسجيل الربح
+    await tx.earning.create({
+      data: {
+        userId: referrer.id,
+        type: 'referral',
+        amount: newTier.bonus,
+        description: `مكافأة ترقية — ${newTier.name}`,
+      },
     });
 
     bonusAdded = newTier.bonus;
 
-    // ✅ 8c) إشعار الترقية للمستخدم
-    await createNotification({
-      userId: referrer.id,
-      type: 'tier_upgrade',
-      title: `🎉 ترقية إلى ${newTier.name}!`,
-      message: `مبروك! لقد وصلت إلى ${newTier.name} بعد ${newCount} إحالة. تم إضافة مكافأة $${newTier.bonus.toLocaleString()} إلى رصيدك مباشرة.`,
-      icon: 'crown',
-      priority: 'high',
-      actionUrl: '/referrals',
-    });
+    // إشعار الترقية
+    await createNotification(
+      {
+        userId: referrer.id,
+        type: 'tier_upgrade',
+        title: `🎉 ترقية إلى ${newTier.name}!`,
+        message: `مبروك! لقد وصلت إلى ${newTier.name} بعد ${newCount} إحالة. تم إضافة مكافأة $${newTier.bonus.toLocaleString()} إلى رصيدك مباشرة.`,
+        icon: 'crown',
+        priority: 'high',
+        actionUrl: '/referrals',
+      },
+      tx
+    );
   }
 
   // ============================================================
-  //   9️⃣ فتح شرط الراتب → إشعار
+  // 8️⃣ فتح شرط الراتب
   // ============================================================
+
   if (
     newTier.salaryLocked &&
-    canWithdrawSalary(newCount, newTier)
+    canWithdrawSalary(
+      newCount,
+      newTier
+    )
   ) {
-    const existing = await prisma.user.findUnique({
-      where: { id: referrer.id },
-      select: { weeklySalaryUnlockedAt: true },
+    const existing = await tx.user.findUnique({
+      where: {
+        id: referrer.id,
+      },
+      select: {
+        weeklySalaryUnlockedAt: true,
+      },
     });
 
-    if (!existing.weeklySalaryUnlockedAt) {
-      await prisma.user.update({
-        where: { id: referrer.id },
-        data: { weeklySalaryUnlockedAt: new Date() },
+    if (
+      !existing.weeklySalaryUnlockedAt
+    ) {
+      await tx.user.update({
+        where: {
+          id: referrer.id,
+        },
+        data: {
+          weeklySalaryUnlockedAt:
+            new Date(),
+        },
       });
 
-      // ✅ إشعار فتح الراتب
-      await createNotification({
-        userId: referrer.id,
-        type: 'salary_unlock',
-        title: `💰 تم تفعيل راتبك الأسبوعي!`,
-        message: `مبروك! يمكنك الآن سحب راتبك الأسبوعي بقيمة $${newTier.weeklySalary} USDT. الراتب يُصرف كل 7 أيام.`,
-        icon: 'wallet',
-        priority: 'high',
-        actionUrl: '/referrals',
-      });
+      await createNotification(
+        {
+          userId: referrer.id,
+          type: 'salary_unlock',
+          title:
+            '💰 تم تفعيل راتبك الأسبوعي!',
+          message: `مبروك! يمكنك الآن سحب راتبك الأسبوعي بقيمة $${newTier.weeklySalary} USDT. الراتب يُصرف كل 7 أيام.`,
+          icon: 'wallet',
+          priority: 'high',
+          actionUrl: '/referrals',
+        },
+        tx
+      );
     }
   }
 
   // ============================================================
-  //   10) إشعار شرط الراتب عند الترقية (معلوماتي)
+  // 9️⃣ إشعار الراتب عند الترقية
   // ============================================================
-  if (tierChanged && newTier.weeklySalary > 0) {
+
+  if (
+    tierChanged &&
+    newTier.weeklySalary > 0
+  ) {
     if (newTier.salaryLocked) {
-      const unlockAt = newTier.minReferrals + newTier.salaryUnlockExtra;
-      const remaining = Math.max(0, unlockAt - newCount);
+      const unlockAt =
+        newTier.minReferrals +
+        newTier.salaryUnlockExtra;
+
+      const remaining = Math.max(
+        0,
+        unlockAt - newCount
+      );
 
       if (remaining > 0) {
-        // إشعار: كيف تحصل على الراتب
-        await createNotification({
-          userId: referrer.id,
-          type: 'salary_info',
-          title: `📢 معلومة عن راتبك الأسبوعي`,
-          message: `راتبك الأسبوعي هو $${newTier.weeklySalary} USDT. لتفعيل السحب، يجب أن تصل إلى ${unlockAt} إحالة (باقي ${remaining} إحالة).`,
-          icon: 'info',
-          priority: 'normal',
-          actionUrl: '/referrals',
-        });
+        await createNotification(
+          {
+            userId: referrer.id,
+            type: 'salary_info',
+            title:
+              '📢 معلومة عن راتبك الأسبوعي',
+            message: `راتبك الأسبوعي هو $${newTier.weeklySalary} USDT. لتفعيل السحب، يجب أن تصل إلى ${unlockAt} إحالة (باقي ${remaining} إحالة).`,
+            icon: 'info',
+            priority: 'normal',
+            actionUrl: '/referrals',
+          },
+          tx
+        );
       }
     } else {
-      // راتب فوري
-      await createNotification({
-        userId: referrer.id,
-        type: 'salary_info',
-        title: `💰 راتبك الأسبوعي جاهز!`,
-        message: `راتبك الأسبوعي $${newTier.weeklySalary} USDT قابل للسحب الآن. الراتب يُصرف كل 7 أيام.`,
-        icon: 'wallet',
-        priority: 'high',
-        actionUrl: '/referrals',
-      });
+      await createNotification(
+        {
+          userId: referrer.id,
+          type: 'salary_info',
+          title:
+            '💰 راتبك الأسبوعي جاهز!',
+          message: `راتبك الأسبوعي $${newTier.weeklySalary} USDT قابل للسحب الآن. الراتب يُصرف كل 7 أيام.`,
+          icon: 'wallet',
+          priority: 'high',
+          actionUrl: '/referrals',
+        },
+        tx
+      );
     }
   }
 
   return {
-    applied: true,
+    activated: true,
     referrer: referrer.referralCode,
     newCount,
     newTier: newTier.key,
@@ -238,19 +449,23 @@ export async function processReferral(newUserId, referrerCode) {
 }
 
 // ============================================================
-//             إنشاء إشعار للمستخدم (Helper)
+// إنشاء إشعار
 // ============================================================
-async function createNotification({
-  userId,
-  type,
-  title,
-  message,
-  icon = 'bell',
-  priority = 'normal',
-  actionUrl,
-}) {
+
+async function createNotification(
+  {
+    userId,
+    type,
+    title,
+    message,
+    icon = 'bell',
+    priority = 'normal',
+    actionUrl,
+  },
+  tx = prisma
+) {
   try {
-    await prisma.userNotification.create({
+    await tx.userNotification.create({
       data: {
         userId,
         type,
@@ -262,30 +477,52 @@ async function createNotification({
       },
     });
   } catch (e) {
-    console.error('Notification create error:', e);
+    console.error(
+      'Notification create error:',
+      e
+    );
   }
 }
 
 // ============================================================
-//             بناء سلسلة الإحالة (موجود)
+// بناء سلسلة الإحالة للمستويات 2-4
 // ============================================================
-async function buildReferralChain(referrerId, newUserId) {
+
+async function buildReferralChain(
+  referrerId,
+  newUserId
+) {
   let currentId = referrerId;
   const chain = [];
 
   for (let i = 0; i < 4; i++) {
     const user = await prisma.user.findUnique({
-      where: { id: currentId },
-      select: { referredBy: true },
+      where: {
+        id: currentId,
+      },
+      select: {
+        referredBy: true,
+      },
     });
-    if (!user?.referredBy) break;
+
+    if (!user?.referredBy) {
+      break;
+    }
+
     chain.push(user.referredBy);
     currentId = user.referredBy;
   }
 
-  for (let i = 0; i < chain.length; i++) {
+  for (
+    let i = 0;
+    i < chain.length;
+    i++
+  ) {
     const level = i + 2;
-    if (level > 4) break;
+
+    if (level > 4) {
+      break;
+    }
 
     await prisma.referralRelation.upsert({
       where: {
@@ -299,19 +536,29 @@ async function buildReferralChain(referrerId, newUserId) {
         referrerId: chain[i],
         referredId: newUserId,
         level,
+        activatedAt: null,
       },
     });
   }
 }
 
+// ============================================================
+// إنشاء مكافأة المستوى
+// ============================================================
 
-
-// ============ إنشاء مكافأة المستوى ============
-async function createTierBonus(userId, tier, amount, milestone) {
+async function createTierBonus(
+  userId,
+  tier,
+  amount,
+  milestone
+) {
   try {
     await prisma.referralBonus.upsert({
       where: {
-        userId_tier: { userId, tier },
+        userId_tier: {
+          userId,
+          tier,
+        },
       },
       update: {},
       create: {
@@ -323,22 +570,35 @@ async function createTierBonus(userId, tier, amount, milestone) {
       },
     });
 
-    // أضف للأرباح المؤقتة (لا يمكن السحب فوراً)
     await prisma.user.update({
-      where: { id: userId },
+      where: {
+        id: userId,
+      },
       data: {
-        totalBonusEarned: { increment: amount },
+        totalBonusEarned: {
+          increment: amount,
+        },
       },
     });
   } catch (e) {
-    console.error('Create bonus error:', e);
+    console.error(
+      'Create bonus error:',
+      e
+    );
   }
 }
 
-// ============ الحصول على المستخدم الحالي والمستوى ============
-export async function getReferralStats(userId) {
+// ============================================================
+// إحصائيات الإحالة
+// ============================================================
+
+export async function getReferralStats(
+  userId
+) {
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: {
+      id: userId,
+    },
     select: {
       referralCode: true,
       totalReferrals: true,
@@ -352,46 +612,104 @@ export async function getReferralStats(userId) {
     },
   });
 
-  if (!user) return null;
+  if (!user) {
+    return null;
+  }
 
-  // إحصائيات
-  const totalReferred = await prisma.user.count({
-    where: { referredBy: userId },
-  });
+  // عدد الإحالات التي تم تفعيلها فعلياً
+  const totalReferred =
+    await prisma.referralRelation.count({
+      where: {
+        referrerId: userId,
+        level: 1,
+        activatedAt: {
+          not: null,
+        },
+      },
+    });
+
+  // عدد الإحالات المعلقة
+  const pendingReferrals =
+    await prisma.referralRelation.count({
+      where: {
+        referrerId: userId,
+        level: 1,
+        activatedAt: null,
+      },
+    });
 
   // المكافآت
-  const bonuses = await prisma.referralBonus.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-  });
+  const bonuses =
+    await prisma.referralBonus.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
 
   // الرواتب
-  const salaries = await prisma.weeklySalary.findMany({
-    where: { userId },
-    orderBy: { createdAt: 'desc' },
-    take: 10,
-  });
+  const salaries =
+    await prisma.weeklySalary.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 10,
+    });
 
   return {
     referralCode: user.referralCode,
-    totalReferrals: user.totalReferrals || 0,
-    referralCount: user.referralCount || 0,
-    referralTier: user.referralTier,
-    referralEarnings: user.referralEarnings || 0,
-    totalBonusEarned: user.totalBonusEarned || 0,
-    totalSalaryEarned: user.totalSalaryEarned || 0,
+
+    totalReferrals:
+      user.totalReferrals || 0,
+
+    referralCount:
+      user.referralCount || 0,
+
+    referralTier:
+      user.referralTier,
+
+    referralEarnings:
+      user.referralEarnings || 0,
+
+    totalBonusEarned:
+      user.totalBonusEarned || 0,
+
+    totalSalaryEarned:
+      user.totalSalaryEarned || 0,
+
     totalReferred,
-    weeklySalaryUnlockedAt: user.weeklySalaryUnlockedAt,
-    lastSalaryPaidAt: user.lastSalaryPaidAt,
+
+    pendingReferrals,
+
+    weeklySalaryUnlockedAt:
+      user.weeklySalaryUnlockedAt,
+
+    lastSalaryPaidAt:
+      user.lastSalaryPaidAt,
+
     bonuses,
+
     recentSalaries: salaries,
   };
 }
 
-// ============ قائمة المُحالين المباشرين ============
-export async function getReferredUsers(userId, limit = 100) {
+// ============================================================
+// قائمة المُحالين المباشرين
+// ============================================================
+
+export async function getReferredUsers(
+  userId,
+  limit = 100
+) {
   return prisma.user.findMany({
-    where: { referredBy: userId },
+    where: {
+      referredBy: userId,
+    },
     select: {
       id: true,
       username: true,
@@ -400,8 +718,11 @@ export async function getReferredUsers(userId, limit = 100) {
       referralTier: true,
       totalDeposited: true,
       createdAt: true,
+      referredBy: true,
     },
-    orderBy: { createdAt: 'desc' },
+    orderBy: {
+      createdAt: 'desc',
+    },
     take: limit,
   });
 }

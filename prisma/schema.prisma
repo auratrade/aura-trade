@@ -100,15 +100,21 @@ model ReferralEarning {
 //                  ReferralRelation (جديد)
 // ============================================================
 model ReferralRelation {
-  id         String   @id @default(uuid())
-  referrerId String
-  referredId String
-  level      Int      @default(1)   // 1 = مباشر
-  createdAt  DateTime @default(now())
+  id            String    @id @default(uuid())
+  referrerId    String
+  referredId    String
+  level         Int       @default(1)
+
+  // null = الإحالة مسجلة لكن لم يتم تفعيلها بعد
+  // تاريخ = تم احتساب الإحالة بعد أول إيداع مقبول
+  activatedAt   DateTime?
+
+  createdAt     DateTime  @default(now())
 
   @@unique([referrerId, referredId])
   @@index([referrerId])
   @@index([referredId])
+  @@index([activatedAt])
   @@map("referral_relations")
 }
 
