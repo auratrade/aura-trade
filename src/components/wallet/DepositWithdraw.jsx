@@ -344,21 +344,7 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
                 />
               </label>
 
-              {/* TXID */}
-              <label className={styles.field}>
-                <span>هاش المعاملة (TXID)</span>
-                <input
-                  type="text"
-                  placeholder="0xabc123def456..."
-                  value={depTxid}
-                  onChange={(e) => setDepTxid(e.target.value)}
-                  className={`${styles.input} mono`}
-                  required
-                />
-                <small className={styles.hint}>
-                  تجده في سجل المعاملات في محفظتك بعد التحويل
-                </small>
-              </label>
+              
 
             
 
@@ -546,19 +532,6 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
               </small>
             </label>
 
-            <label className={styles.field}>
-              <span>رمز المعاملة PIN</span>
-              <input
-                type="password"
-                inputMode="numeric"
-                maxLength={4}
-                placeholder="••••"
-                value={wdPin}
-                onChange={(e) => setWdPin(e.target.value.replace(/\D/g, ''))}
-                className={`${styles.input} mono`}
-                required
-              />
-            </label>
 
             {wdAmount && (
               <div className={styles.summary}>
