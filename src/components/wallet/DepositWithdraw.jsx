@@ -10,7 +10,6 @@ import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import styles from './DepositWithdraw.module.css';
 
-// QR Code Generator (SVG بسيط)
 // QR Code Generator (SVG via API)
 function QRCodeSVG({ value, size = 200 }) {
   const encoded = encodeURIComponent(value);
@@ -44,6 +43,7 @@ function QRCodeSVG({ value, size = 200 }) {
     </div>
   );
 }
+
 export default function DepositWithdraw({ initialTab = 'deposit' }) {
   const toast = useToast();
   const { user, refreshBalance } = useAuth();
@@ -65,13 +65,11 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
 
   // ============ Deposit State ============
   const [depAmount, setDepAmount] = useState('');
-  const [depTxid, setDepTxid] = useState('');
   const [depProof, setDepProof] = useState(null);
 
   // ============ Withdraw State ============
   const [wdAmount, setWdAmount] = useState('');
   const [wdAddress, setWdAddress] = useState('');
-  const [wdPin, setWdPin] = useState('');
 
   // ============ نسخ العنوان ============
   const copyAddress = () => {
@@ -90,11 +88,6 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
       return;
     }
 
-    if (!depTxid || depTxid.trim().length < 10) {
-      toast.error('الرجاء إدخال هاش المعاملة (TXID) صحيح');
-      return;
-    }
-
     setSubmitting(true);
 
     try {
@@ -104,7 +97,7 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
         body: JSON.stringify({
           amount: parseFloat(depAmount),
           network: `${currentNetwork.name} (${currentNetwork.key})`,
-          txid: depTxid.trim(),
+          txid: null,
           proof: depProof ? depProof.name : null,
         }),
       });
@@ -117,7 +110,6 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
 
       toast.success('✅ تم إرسال طلب الإيداع! سيتم مراجعته خلال 5-30 دقيقة');
       setDepAmount('');
-      setDepTxid('');
       setDepProof(null);
     } catch (err) {
       console.error('Deposit error:', err);
@@ -139,10 +131,6 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
       toast.error('الرجاء إدخال عنوان محفظة صحيح');
       return;
     }
-    if (wdPin.length !== 4) {
-      toast.error('رمز PIN يجب أن يكون 4 أرقام');
-      return;
-    }
 
     setSubmitting(true);
 
@@ -154,7 +142,6 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
           amount: parseFloat(wdAmount),
           network: `${currentNetwork.name} (${currentNetwork.key})`,
           address: wdAddress.trim(),
-          pin: wdPin,
         }),
       });
 
@@ -165,7 +152,6 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
       toast.success('✅ تم استلام طلب السحب! سيُعالج خلال 24 ساعة');
       setWdAmount('');
       setWdAddress('');
-      setWdPin('');
 
       if (refreshBalance) await refreshBalance();
     } catch (err) {
@@ -322,13 +308,19 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
                 </small>
               </label>
 
+              <div
+                className={styles.notice}
+                style={{
+                  background: 'rgba(245, 176, 65, 0.1)',
+                  borderColor: 'rgba(245, 176, 65, 0.3)',
+                }}
+              >
+                <AlertTriangle size={16} />
+                <div>
+                  <b>ملاحظة:</b> يمكنك سحب أرباحك فقط (من المهام، الإحالات، الرواتب). رأس المال المُودع لا يمكن سحبه.
+                </div>
+              </div>
 
-                    <div className={styles.notice} style={{ background: 'rgba(245, 176, 65, 0.1)', borderColor: 'rgba(245, 176, 65, 0.3)' }}>
-  <AlertTriangle size={16} />
-  <div>
-    <b>ملاحظة:</b> يمكنك سحب أرباحك فقط (من المهام، الإحالات، الرواتب). رأس المال المُودع لا يمكن سحبه.
-  </div>
-</div>
               {/* المبلغ */}
               <label className={styles.field}>
                 <span>المبلغ المُحوَّل (USDT)</span>
@@ -343,10 +335,6 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
                   required
                 />
               </label>
-
-              
-
-            
 
               {/* Submit */}
               <button
@@ -420,10 +408,10 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
                 <span>4</span> الصق العنوان أعلاه وأدخل المبلغ
               </li>
               <li>
-                <span>5</span> أكّد التحويل وانسخ <b>TXID</b>
+                <span>5</span> أكّد عملية التحويل
               </li>
               <li>
-                <span>6</span> ارجع لهذه الصفحة واملأ النموذج
+                <span>6</span> ارجع لهذه الصفحة واملأ نموذج الإيداع بالمبلغ المُحول
               </li>
             </ol>
           </div>
@@ -433,24 +421,25 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
       {/* ================= WITHDRAW ================= */}
       {tab === 'withdraw' && (
         <>
-        <div className={styles.balanceBox}>
-  <div className={styles.balanceItem}>
-    <span>الرصيد القابل للسحب</span>
-    <b className="mono text-green">
-      ${user?.withdrawableBalance?.toFixed(2) || '0.00'} USDT
-    </b>
-  </div>
-  <div className={styles.balanceItem}>
-    <span>قيد السحب</span>
-    <b className="mono">
-      ${user?.lockedBalance?.toFixed(2) || '0.00'} USDT
-    </b>
-  </div>
-  <div className={styles.balanceItem}>
-    <span>رسوم السحب</span>
-    <b className="mono">{binanceWallet.withdrawFee} USDT</b>
-  </div>
-</div>
+          <div className={styles.balanceBox}>
+            <div className={styles.balanceItem}>
+              <span>الرصيد القابل للسحب</span>
+              <b className="mono text-green">
+                ${user?.withdrawableBalance?.toFixed(2) || '0.00'} USDT
+              </b>
+            </div>
+            <div className={styles.balanceItem}>
+              <span>قيد السحب</span>
+              <b className="mono">
+                ${user?.lockedBalance?.toFixed(2) || '0.00'} USDT
+              </b>
+            </div>
+            <div className={styles.balanceItem}>
+              <span>رسوم السحب</span>
+              <b className="mono">{binanceWallet.withdrawFee} USDT</b>
+            </div>
+          </div>
+
           {/* اختيار الشبكة للسحب */}
           <div className={styles.networkSection}>
             <div className={styles.networkLabel}>
@@ -531,7 +520,6 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
                 سيُخصم {binanceWallet.withdrawFee} USDT رسوم شبكة
               </small>
             </label>
-
 
             {wdAmount && (
               <div className={styles.summary}>

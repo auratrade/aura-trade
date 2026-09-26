@@ -48,13 +48,12 @@ export const REFERRAL_TIERS = [
     name: 'المستوى الثالث',
     nameEn: 'Level 3',
     minReferrals: 70,
-    bonus: 0,       // ⚠️ غير محدد في طلبك
-    weeklySalary: 0, // ⚠️ غير محدد
+    bonus: 200,
+    weeklySalary: 100,
     salaryUnlockExtra: 0,
     salaryLocked: false,
     color: '#a78bfa',
     icon: 'crown',
-    note: 'قيد التحديث',
   },
   {
     key: 'LEVEL4',

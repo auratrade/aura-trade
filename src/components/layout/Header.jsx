@@ -208,6 +208,10 @@ export default function Header() {
             <button
               className={styles.navItem}
               onClick={() => {
+                // إذا كان سيتم فتح الإشعارات، علّم الكل كمقروء
+                if (!showNotif && unreadCount > 0) {
+                  markAllRead();
+                }
                 setShowNotif(!showNotif);
                 setShowUser(false);
                 setShowMore(false);

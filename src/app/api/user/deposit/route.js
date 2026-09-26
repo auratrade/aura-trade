@@ -11,9 +11,9 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { amount, network, txid, proof } = body;
+    const { amount, network, proof } = body;
 
-    // التحقق
+    // 1️⃣ التحقق من المبالغ والشبكة فقط
     if (!amount || amount < 10) {
       return NextResponse.json(
         { error: 'الحد الأدنى للإيداع 10 USDT' },
@@ -26,45 +26,27 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    if (!txid || txid.length < 10) {
-      return NextResponse.json(
-        { error: 'هاش المعاملة غير صالح' },
-        { status: 400 }
-      );
-    }
 
-    // تحقق من عدم تكرار TXID
-    const existing = await prisma.transaction.findFirst({
-      where: { txid, type: 'deposit' },
-    });
-
-    if (existing) {
-      return NextResponse.json(
-        { error: 'هاش المعاملة مستخدم بالفعل' },
-        { status: 409 }
-      );
-    }
-
-    // جلب بيانات المستخدم
+    // 2️⃣ جلب بيانات المستخدم
     const user = await prisma.user.findUnique({
       where: { id: session.userId },
       select: { username: true, email: true },
     });
 
-    // إنشاء المعاملة
+    // 3️⃣ إنشاء المعاملة بدون إجبار وجود txid
     const transaction = await prisma.transaction.create({
       data: {
         userId: session.userId,
         type: 'deposit',
         amount: parseFloat(amount),
         network,
-        txid,
+        txid: null, // تم تغيير القيمة لتكون فارغة
         status: 'pending',
         meta: proof ? JSON.stringify({ hasProof: true }) : null,
       },
     });
 
-    // إشعار الأدمن
+    // 4️⃣ إشعار الأدمن
     await notifyAdmin({
       type: 'deposit',
       title: 'طلب إيداع جديد',

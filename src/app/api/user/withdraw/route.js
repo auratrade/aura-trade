@@ -13,7 +13,7 @@ export async function POST(request) {
     }
 
     const body = await request.json();
-    const { amount, network, address, pin } = body;
+    const { amount, network, address } = body;
 
     // ============ التحقق من المدخلات ============
     if (!amount || amount < MIN_WITHDRAW) {
@@ -28,12 +28,6 @@ export async function POST(request) {
         { status: 400 }
       );
     }
-    if (!pin || pin.length !== 4) {
-      return NextResponse.json(
-        { error: 'رمز PIN غير صالح' },
-        { status: 400 }
-      );
-    }
 
     // ============ جلب المستخدم ============
     const user = await prisma.user.findUnique({
@@ -41,7 +35,7 @@ export async function POST(request) {
       select: {
         availableBalance: true,
         lockedBalance: true,
-        withdrawableBalance: true,   // ✅ جديد
+        withdrawableBalance: true,
         username: true,
       },
     });
@@ -81,7 +75,7 @@ export async function POST(request) {
         where: { id: session.userId },
         data: {
           availableBalance: { decrement: totalNeeded },
-          withdrawableBalance: { decrement: totalNeeded },   // ✅ جديد
+          withdrawableBalance: { decrement: totalNeeded },
           lockedBalance: { increment: totalNeeded },
         },
       });
@@ -95,7 +89,7 @@ export async function POST(request) {
           network,
           address,
           status: 'pending',
-          meta: JSON.stringify({ fee: FEE, pin }),
+          meta: JSON.stringify({ fee: FEE }),
         },
       });
     });

@@ -3,88 +3,100 @@ import { useState, useEffect } from 'react';
 import {
   TrendingUp, TrendingDown, Loader2, Wallet, RefreshCw
 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 import TradeResultModal from './TradeResultModal';
 import styles from './TradeActions.module.css';
 
-const TRADE_AMOUNT = 100; // قيمة الصفقة التجريبية
+const TRADE_AMOUNT = 100; // قيمة الصفقة
 
 export default function TradeActions() {
-  const [balance, setBalance] = useState(1000); // رصيد تجريبي
+  const { user, refreshBalance } = useAuth();
+  const toast = useToast();
+
   const [processing, setProcessing] = useState(null); // 'up' | 'down' | null
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
 
-  // استرجاع من localStorage
+  // استرجاع من localStorage (لسجل الصفقات فقط)
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('aura-demo-trades');
+      const saved = localStorage.getItem('aura-trades-history');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (typeof parsed.balance === 'number') setBalance(parsed.balance);
         if (Array.isArray(parsed.history)) setHistory(parsed.history);
       }
     } catch (e) {}
   }, []);
 
-  // حفظ في localStorage
+  // حفظ سجل الصفقات في localStorage
   useEffect(() => {
     if (typeof window === 'undefined') return;
     localStorage.setItem(
-      'aura-demo-trades',
-      JSON.stringify({ balance, history })
+      'aura-trades-history',
+      JSON.stringify({ history })
     );
-  }, [balance, history]);
+  }, [history]);
 
-  const executeTrade = (direction) => {
+  const executeTrade = async (direction) => {
     if (processing) return;
-    if (balance < TRADE_AMOUNT) {
-      alert('رصيدك التجريبي غير كافٍ. أعد التعيين للمتابعة.');
+
+    // التحقق من الرصيد
+    if (!user || (user.availableBalance || 0) < TRADE_AMOUNT) {
+      toast.error('رصيدك غير كافٍ، الحد الأدنى للصفقة 100$');
       return;
     }
 
     setProcessing(direction);
 
-    // محاكاة تنفيذ الصفقة
-    setTimeout(() => {
-      const entryPrice = 69149.29 + (Math.random() - 0.5) * 200;
-      // ⚠️ الخسارة قسرية (للتجربة)
-      const exitPrice = entryPrice * (direction === 'up' ? 0.985 : 0.985);
-      const lossPct = 0.012 + Math.random() * 0.015; // 1.2% - 2.7%
-      const loss = TRADE_AMOUNT * lossPct;
-      const balanceAfter = Math.max(0, balance - loss);
+    try {
+      // استدعاء API لتنفيذ الصفقة
+      const res = await fetch('/api/user/trade', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ direction }),
+      });
 
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'فشل تنفيذ الصفقة');
+      }
+
+      const data = await res.json();
+      const tradeResult = data.trade;
+
+      // تحديث الرصيد من قاعدة البيانات
+      await refreshBalance();
+
+      // إضافة الصفقة إلى السجل
       const newResult = {
         direction,
-        symbol: 'BTC/USDT',
-        entryPrice,
-        exitPrice,
-        amount: TRADE_AMOUNT,
-        loss,
-        balanceAfter,
+        symbol: tradeResult.symbol,
+        entryPrice: parseFloat(tradeResult.entryPrice),
+        exitPrice: parseFloat(tradeResult.exitPrice),
+        amount: tradeResult.amount,
+        loss: parseFloat(tradeResult.loss),
+        balanceAfter: parseFloat(tradeResult.balanceAfter),
         timestamp: Date.now(),
       };
 
-      setBalance(balanceAfter);
       setHistory((prev) => [newResult, ...prev].slice(0, 5));
       setResult(newResult);
+      toast.success(`تم تنفيذ صفقة ${direction === 'up' ? 'صعود' : 'هبوط'} بنجاح - خسارة $${tradeResult.loss}`);
+    } catch (error) {
+      toast.error(error.message || 'حدث خطأ أثناء تنفيذ الصفقة');
+      console.error('Trade error:', error);
+    } finally {
       setProcessing(null);
-    }, 1800);
+    }
   };
 
-  const resetBalance = async () => {
-  const ok = await confirm({
-    title: 'إعادة تعيين الرصيد',
-    message: 'هل تريد إعادة تعيين الرصيد التجريبي إلى 1000$؟',
-    confirmText: 'إعادة تعيين',
-    type: 'warning',
-  });
-  if (!ok) return;
-
-  setBalance(1000);
-  setHistory([]);
-  localStorage.removeItem('aura-demo-trades');
-  toast.success('تم إعادة تعيين الرصيد بنجاح');
-};
+  const resetBalanceHistory = async () => {
+    // فقط حذف السجل، الرصيد الفعلي لا يُحذف
+    setHistory([]);
+    localStorage.removeItem('aura-trades-history');
+    toast.success('تم حذف سجل الصفقات بنجاح');
+  };
 
   return (
     <>
@@ -94,13 +106,13 @@ export default function TradeActions() {
           <div className={styles.balanceBox}>
             <Wallet size={14} className="text-gold" />
             <div>
-              <div className={styles.balanceLabel}>رصيد تجريبي</div>
+              <div className={styles.balanceLabel}>رصيدك الحقيقي</div>
               <div className={`${styles.balanceValue} mono`}>
-                ${balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                ${(user?.availableBalance || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
               </div>
             </div>
           </div>
-          <button className={styles.resetBtn} onClick={resetBalance} title="إعادة تعيين">
+          <button className={styles.resetBtn} onClick={resetBalanceHistory} title="حذف السجل">
             <RefreshCw size={14} />
           </button>
         </div>
@@ -145,7 +157,7 @@ export default function TradeActions() {
         </div>
 
         <div className={styles.tradeInfo}>
-          قيمة الصفقة: <b className="mono">${TRADE_AMOUNT}</b> • تجريبي
+          قيمة الصفقة: <b className="mono">${TRADE_AMOUNT}</b> • {(user?.availableBalance || 0) >= TRADE_AMOUNT ? 'جاهز للتداول' : 'رصيد غير كافٍ'}
         </div>
 
         {/* History */}

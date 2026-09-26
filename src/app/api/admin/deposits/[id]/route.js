@@ -62,6 +62,20 @@ export async function POST(request, { params }) {
         });
       });
 
+      // إنشاء إشعار للمستخدم
+      await prisma.userNotification.create({
+        data: {
+          userId: tx.userId,
+          title: 'تم تأكيد الإيداع 💰',
+          message: `تمت إضافة مبلغ $${tx.amount} بنجاح إلى حسابك.`,
+          type: 'deposit',
+          icon: 'arrow-down-left',
+          priority: 'MEDIUM',
+          actionUrl: '/dashboard',
+          isRead: false,
+        },
+      });
+
       // أعد حساب الأرصدة
       await updateUserBalances(tx.userId);
 
@@ -82,6 +96,20 @@ export async function POST(request, { params }) {
         data: {
           status: 'rejected',
           reason: reason || 'لم يتم التحقق من التحويل',
+        },
+      });
+
+      // إنشاء إشعار للمستخدم
+      await prisma.userNotification.create({
+        data: {
+          userId: tx.userId,
+          title: 'تم رفض طلب الإيداع ❌',
+          message: `تم رفض طلب الإيداع بمبلغ $${tx.amount}.`,
+          type: 'deposit',
+          icon: 'x-circle',
+          priority: 'MEDIUM',
+          actionUrl: '/dashboard',
+          isRead: false,
         },
       });
 

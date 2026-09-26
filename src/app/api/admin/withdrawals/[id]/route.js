@@ -75,6 +75,20 @@ export async function POST(request, { params }) {
 });
       });
 
+      // إنشاء إشعار للمستخدم
+      await prisma.userNotification.create({
+        data: {
+          userId: tx.userId,
+          title: 'تمت معالجة طلب السحب 📤',
+          message: `تم تحويل مبلغ $${tx.amount} إلى محفظتك بنجاح.`,
+          type: 'withdrawal',
+          icon: 'arrow-up-right',
+          priority: 'HIGH',
+          actionUrl: '/dashboard',
+          isRead: false,
+        },
+      });
+
       await updateUserBalances(tx.userId);
 
       await logAdminAction({
@@ -109,6 +123,20 @@ export async function POST(request, { params }) {
             lockedBalance: { decrement: totalLocked },
           },
         });
+      });
+
+      // إنشاء إشعار للمستخدم
+      await prisma.userNotification.create({
+        data: {
+          userId: tx.userId,
+          title: 'تم رفض طلب السحب ❌',
+          message: `تم رفض طلب السحب بمبلغ $${tx.amount} وإعادة الرصيد لحسابك.`,
+          type: 'withdrawal',
+          icon: 'x-circle',
+          priority: 'HIGH',
+          actionUrl: '/dashboard',
+          isRead: false,
+        },
       });
 
       await updateUserBalances(tx.userId);
