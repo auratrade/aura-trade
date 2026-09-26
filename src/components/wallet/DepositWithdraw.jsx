@@ -308,18 +308,7 @@ export default function DepositWithdraw({ initialTab = 'deposit' }) {
                 </small>
               </label>
 
-              <div
-                className={styles.notice}
-                style={{
-                  background: 'rgba(245, 176, 65, 0.1)',
-                  borderColor: 'rgba(245, 176, 65, 0.3)',
-                }}
-              >
-                <AlertTriangle size={16} />
-                <div>
-                  <b>ملاحظة:</b> يمكنك سحب أرباحك فقط (من المهام، الإحالات، الرواتب). رأس المال المُودع لا يمكن سحبه.
-                </div>
-              </div>
+             
 
               {/* المبلغ */}
               <label className={styles.field}>
