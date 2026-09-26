@@ -58,7 +58,7 @@ export async function POST(request) {
       where: { email, type: 'register' },
     });
 
-    // أنشئ كود
+    // أنشئ كود جديد
     const code = generateOtp();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -66,23 +66,29 @@ export async function POST(request) {
       data: { email, code, type: 'register', expiresAt },
     });
 
-    // أرسل البريد
+    // ✅ أرسل البريد وتوقف فوراً إذا حدث خطأ بدلاً من إظهار رسالة النجاح
     try {
       await sendOtpEmail({ to: email, code, name: name || 'عزيزي' });
       await recordAttempt({ identifier: email, type: 'register', success: true, ipAddress: ip });
     } catch (e) {
-      console.error('Send OTP error:', e);
+      console.error('❌ Send OTP Failed:', e);
       await recordAttempt({ identifier: email, type: 'register', success: false, ipAddress: ip });
+
+      return NextResponse.json(
+        { error: 'فشل إرسال رمز التحقق إلى بريدك الإلكتروني. يرجى المحاولة لاحقاً.' },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
       success: true,
       message: 'تم إرسال رمز التحقق إلى بريدك',
     });
+
   } catch (error) {
-    console.error('🔥 SEND OTP ERROR:', error);
+    console.error('🔥 SEND OTP ROUTE ERROR:', error);
     return NextResponse.json(
-      { error: 'فشل إرسال رمز التحقق' },
+      { error: 'حدث خطأ غير متوقع في الخادم' },
       { status: 500 }
     );
   }

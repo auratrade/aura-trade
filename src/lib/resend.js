@@ -1,15 +1,13 @@
 import { Resend } from 'resend';
 
-// ✅ إنشاء Client فقط إذا المفتاح موجود (يمنع فشل البناء)
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
-
 /**
- * إرسال OTP عبر البريد
+ * إرسال OTP عبر البريد الإلكتروني
  */
 export async function sendOtpEmail({ to, code, name = 'عزيزي' }) {
-  // ✅ وضع التطوير: اطبع الكود في Terminal
-  if (!resend) {
+  const RESEND_API_KEY = process.env.RESEND_API_KEY;
+
+  // ✅ وضع التطوير: طباعة الكود في Terminal إذا لم يتم ضبط المفتاح
+  if (!RESEND_API_KEY) {
     console.log('\n============================================');
     console.log('🔑 OTP CODE (Resend not configured)');
     console.log('   To:', to);
@@ -17,6 +15,8 @@ export async function sendOtpEmail({ to, code, name = 'عزيزي' }) {
     console.log('============================================\n');
     return { success: true, id: 'dev-mode' };
   }
+
+  const resend = new Resend(RESEND_API_KEY);
 
   try {
     const { data, error } = await resend.emails.send({
@@ -120,21 +120,17 @@ export async function sendOtpEmail({ to, code, name = 'عزيزي' }) {
             <div class="logo">A</div>
             <h1>رمز التحقق</h1>
             <p class="subtitle">مرحباً ${name}، استخدم الرمز التالي لإكمال العملية</p>
-
             <div class="code-box">
               <div class="label">رمز التحقق</div>
               <div class="code">${code}</div>
             </div>
-
             <div class="warning">
               ⏱️ الرمز صالح لمدة 10 دقائق فقط
             </div>
-
             <p class="note">
               إذا لم تكن أنت من طلب هذا الرمز، يمكنك تجاهل هذا البريد بأمان.
               لا تشارك هذا الرمز مع أي شخص.
             </p>
-
             <div class="footer">
               © 2026 AURA TRADE & INVEST<br>
               جميع الحقوق محفوظة
@@ -146,13 +142,13 @@ export async function sendOtpEmail({ to, code, name = 'عزيزي' }) {
     });
 
     if (error) {
-      console.error('Resend error:', error);
-      throw new Error(error.message);
+      console.error('❌ Resend API Error Response:', JSON.stringify(error, null, 2));
+      throw new Error(error.message || 'فشل إرسال البريد عبر Resend');
     }
 
     return { success: true, id: data?.id };
   } catch (error) {
-    console.error('Send OTP error:', error);
+    console.error('❌ Send OTP error:', error);
     throw error;
   }
 }
