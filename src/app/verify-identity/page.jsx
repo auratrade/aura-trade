@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef , useEffect  } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Shield, Upload, Camera, CheckCircle2, AlertCircle,
@@ -33,7 +33,7 @@ const ID_TYPES = [
 
 export default function VerifyIdentityPage() {
   const router = useRouter();
-  const { user, registerFromPending } = useAuth();
+  const { user } = useAuth();
   const fileInputRef = useRef(null);
   const toast = useToast();
 const { confirm } = useConfirm();
@@ -46,6 +46,13 @@ const { confirm } = useConfirm();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // 1: نوع الهوية، 2: الصور، 3: النجاح
+  useEffect(() => {
+  // ✅ إذا كان المستخدم موثق بالفعل، لا تدعه يصل للصفحة
+  if (user?.isVerified === true) {
+    toast.info('حسابك موثق بالفعل ✓');
+    router.push('/dashboard');
+  }
+}, [user, router, toast]);
 
  const handleFile = (e, setter) => {
   const file = e.target.files?.[0];
@@ -74,27 +81,28 @@ const { confirm } = useConfirm();
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  // ============ إنشاء الحساب بعد التحقق ============
  const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
 
-  // التحقق
+  // التحقق من الحقول
   if (!frontImage) { setError('الرجاء رفع الصورة الأمامية'); return; }
   if (idType !== 'passport' && !backImage) { setError('الرجاء رفع الصورة الخلفية'); return; }
   if (!selfieImage) { setError('الرجاء رفع صورة سيلفي'); return; }
   if (!agree) { setError('يجب الموافقة على الشروط'); return; }
 
+  // ✅ منع المستخدم الموثق من إعادة الإرسال
+  if (user?.isVerified === true) {
+    setError('حسابك موثق بالفعل');
+    toast.info('حسابك موثق بالفعل');
+    setTimeout(() => router.push('/dashboard'), 1500);
+    return;
+  }
+
   setLoading(true);
 
   try {
-    // 1) أنشئ الحساب (إذا لم يكن موجوداً)
-    await registerFromPending({
-      identityType: idType,
-      identityVerified: false,  // ⚠️ لم يُوثَّق بعد
-    });
-
-    // 2) أرسل الصور
+    // ✅ لم نعد نستدعي registerFromPending — المستخدم مسجل بالفعل
     const res = await fetch('/api/user/verify-identity', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -121,36 +129,7 @@ const { confirm } = useConfirm();
     setLoading(false);
   }
 };
-  // ============ تخطي التحقق ============
-  const skipVerification = async () => {
-  const ok = await confirm({
-    title: 'تخطي التحقق؟',
-    message: 'لن تتمكن من السحب بدون تأكيد الهوية. يمكنك التفعيل لاحقاً.',
-    confirmText: 'تخطي',
-    cancelText: 'إلغاء',
-    type: 'warning',
-  });
-
-  if (!ok) return;
-
-  setLoading(true);
-  setError('');
-
-  try {
-    await registerFromPending({
-      identityType: null,
-      identityVerified: false,
-    });
-
-    toast.success('تم إنشاء حسابك! جاري التحويل...');
-    router.push('/dashboard');
-  } catch (err) {
-    console.error('🔴 Skip error:', err);
-    toast.error(err.message || 'حدث خطأ');
-    setError(err.message || 'حدث خطأ');
-    setLoading(false);
-  }
-};
+ 
 
   return (
     <div className={styles.page}>
@@ -327,14 +306,7 @@ const { confirm } = useConfirm();
               </button>
             </div>
 
-            <button
-              type="button"
-              className={styles.skipBtn}
-              onClick={skipVerification}
-              disabled={loading}
-            >
-              تخطي الآن (يمكنك التفعيل لاحقاً)
-            </button>
+          
           </form>
         )}
 

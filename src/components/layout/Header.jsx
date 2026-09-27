@@ -335,8 +335,25 @@ export default function Header() {
                   </div>
                 </div>
 
-               {/* ✅ خيار توثيق الحساب */}
+{/* اعرض زر التوثيق فقط إذا لم يكن المستخدم موثقاً */}
+{!user?.isVerified && (
+  <Link
+    href="/verify-identity"
+    className={styles.dropdownItem}
+    onClick={() => setShowUser(false)}
+  >
+    <BadgeCheck size={14} />
+    توثيق الحساب
+  </Link>
+)}
 
+{/* إذا كان موثقاً، اعرض بادج أخضر فقط */}
+{user?.isVerified && (
+  <div className={styles.dropdownItem} style={{ cursor: 'default', opacity: 0.7 }}>
+    <BadgeCheck size={14} style={{ color: '#10b981' }} />
+    <span>حساب موثق ✓</span>
+  </div>
+)}
 
                 <Link
                   href="/settings"
