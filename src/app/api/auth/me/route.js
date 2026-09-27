@@ -15,6 +15,7 @@ export async function GET() {
       email: true,
       username: true,
       fullName: true,
+      isVerified: true,          // ✅ السطر الجديد — علامة التوثيق
       accountLevel: true,
       referralCode: true,
       referralCount: true,

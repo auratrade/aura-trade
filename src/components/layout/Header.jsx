@@ -310,10 +310,9 @@ export default function Header() {
               <div className={styles.userAvatar}>
                 {user?.username?.slice(0, 2).toUpperCase() || 'AV'}
               </div>
-              <span className={styles.navLabel} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                {user?.username?.slice(0, 8) || 'حسابي'}
-                <VerifiedBadge isVerified={isVerifiedUser} size={13} />
-              </span>
+              <span className={styles.navLabel}>
+  {user?.username?.slice(0, 8) || 'حسابي'}
+</span>
             </button>
 
             {showUser && (
@@ -324,10 +323,9 @@ export default function Header() {
                   </div>
                   <div>
                     {/* إظهار علامة التوثيق فقط بجانب اسم المستخدم الموثق */}
-                    <div className={styles.userHeadName} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                      <span>{user?.fullName || user?.username || 'مستخدم'}</span>
-                      <VerifiedBadge isVerified={isVerifiedUser} size={16} />
-                    </div>
+                   <div className={styles.userHeadName}>
+  {user?.fullName || user?.username || 'مستخدم'}
+</div>
                     <div className={styles.userHeadRole}>
                       {user?.accountLevel === 0 && 'مبتدئ'}
                       {user?.accountLevel === 1 && 'مستوى 1'}
@@ -337,38 +335,41 @@ export default function Header() {
                   </div>
                 </div>
 
-                {/* ✅ خيار توثيق الحساب المضاف حديثاً */}
-                <Link
-                  href="/verfy-identy"
-                  className={styles.dropdownItem}
-                  onClick={() => setShowUser(false)}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-                >
-                 
-                  {isVerifiedUser ? (
-                    <span style={{
-                      fontSize: '10px',
-                      backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                      color: '#10b981',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontWeight: '600'
-                    }}>
-                      موثق
-                    </span>
-                  ) : (
-                    <span style={{
-                      fontSize: '10px',
-                      backgroundColor: 'rgba(245, 158, 11, 0.15)',
-                      color: '#f59e0b',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontWeight: '600'
-                    }}>
-                      غير موثق
-                    </span>
-                  )}
-                </Link>
+               {/* ✅ خيار توثيق الحساب */}
+<Link
+  href="/"
+  className={styles.dropdownItem}
+  onClick={() => setShowUser(false)}
+  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+>
+  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+    <BadgeCheck size={14} />
+    توثيق الحساب
+  </span>
+  {isVerifiedUser ? (
+    <span style={{
+      fontSize: '10px',
+      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+      color: '#10b981',
+      padding: '2px 8px',
+      borderRadius: '4px',
+      fontWeight: '600'
+    }}>
+      ✓ موثق
+    </span>
+  ) : (
+    <span style={{
+      fontSize: '10px',
+      backgroundColor: 'rgba(245, 158, 11, 0.15)',
+      color: '#f59e0b',
+      padding: '2px 8px',
+      borderRadius: '4px',
+      fontWeight: '600'
+    }}>
+      غير موثق
+    </span>
+  )}
+</Link>
 
                 <Link
                   href="/settings"
