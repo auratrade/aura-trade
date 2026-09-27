@@ -7,12 +7,13 @@ import {
   Bell, CheckCheck, Crown, Wallet, Info, Gift,
   LayoutDashboard, Target, ArrowDownToLine, ArrowUpFromLine,
   Users, Shield, Moon, Sun, User, X, LogOut,
-  MoreHorizontal, Settings
+  MoreHorizontal, Settings, BadgeCheck
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import styles from './Header.module.css';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
+import VerifiedBadge from '@/components/common/VerifiedBadge';
 
 // ============ روابط التنقل الأساسية (تظهر في الأسفل) ============
 const PRIMARY_LINKS = [
@@ -147,6 +148,13 @@ export default function Header() {
     }
   }
 
+  // فحص صارم: يكون الحساب موثقاً فقط في حال كانت الحالة approved أو isVerified تساوي true
+  const isVerifiedUser = Boolean(
+    user?.isVerified === true ||
+    user?.kycStatus === 'approved' ||
+    user?.identityVerification?.status === 'approved'
+  );
+
   return (
     <>
       {/* ============ Bottom Navigation Bar ============ */}
@@ -169,7 +177,7 @@ export default function Header() {
               </Link>
             );
           })}
-
+          
           {/* ============ MORE MENU ============ */}
           <div className={styles.dropdownWrap} ref={moreRef}>
             <button
@@ -208,7 +216,6 @@ export default function Header() {
             <button
               className={styles.navItem}
               onClick={() => {
-                // إذا كان سيتم فتح الإشعارات، علّم الكل كمقروء
                 if (!showNotif && unreadCount > 0) {
                   markAllRead();
                 }
@@ -303,8 +310,9 @@ export default function Header() {
               <div className={styles.userAvatar}>
                 {user?.username?.slice(0, 2).toUpperCase() || 'AV'}
               </div>
-              <span className={styles.navLabel}>
+              <span className={styles.navLabel} style={{ display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
                 {user?.username?.slice(0, 8) || 'حسابي'}
+                <VerifiedBadge isVerified={isVerifiedUser} size={13} />
               </span>
             </button>
 
@@ -315,8 +323,10 @@ export default function Header() {
                     {user?.username?.slice(0, 2).toUpperCase() || 'AV'}
                   </div>
                   <div>
-                    <div className={styles.userHeadName}>
-                      {user?.fullName || user?.username || 'مستخدم'}
+                    {/* إظهار علامة التوثيق فقط بجانب اسم المستخدم الموثق */}
+                    <div className={styles.userHeadName} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                      <span>{user?.fullName || user?.username || 'مستخدم'}</span>
+                      <VerifiedBadge isVerified={isVerifiedUser} size={16} />
                     </div>
                     <div className={styles.userHeadRole}>
                       {user?.accountLevel === 0 && 'مبتدئ'}
@@ -326,6 +336,39 @@ export default function Header() {
                     </div>
                   </div>
                 </div>
+
+                {/* ✅ خيار توثيق الحساب المضاف حديثاً */}
+                <Link
+                  href="/verfy-identy"
+                  className={styles.dropdownItem}
+                  onClick={() => setShowUser(false)}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                 
+                  {isVerifiedUser ? (
+                    <span style={{
+                      fontSize: '10px',
+                      backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                      color: '#10b981',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontWeight: '600'
+                    }}>
+                      موثق
+                    </span>
+                  ) : (
+                    <span style={{
+                      fontSize: '10px',
+                      backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                      color: '#f59e0b',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontWeight: '600'
+                    }}>
+                      غير موثق
+                    </span>
+                  )}
+                </Link>
 
                 <Link
                   href="/settings"

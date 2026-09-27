@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
-const REWARD_PERCENT = 2;
+const REWARD_PERCENT = 3.33;
 
 export async function POST(request) {
   try {

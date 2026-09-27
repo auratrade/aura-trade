@@ -140,7 +140,7 @@ export default function DailyMissions() {
             <Wallet size={18} />
           </div>
           <div>
-            <div className={styles.summaryLabel}>رصيد الإيداع ({percent}%)</div>
+            <div className={styles.summaryLabel}>رصيد الإيداع 3.33%</div>
             <div className={`${styles.summaryValue} mono`}>
               ${depositBalance.toFixed(2)}
             </div>
