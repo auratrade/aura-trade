@@ -4,7 +4,7 @@ import styles from './Footer.module.css';
 const FOOTER_LINKS = [
   { href: '/privacy', label: 'الخصوصية' },
   { href: '/terms', label: 'الشروط' },
-  { href: '/support', label: 'الدعم' },
+  { href: '/support', label: 'خدمة العملاء' },
   { href: '/terms', label: 'سياسة الاستخدام' },
 ];
 

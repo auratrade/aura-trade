@@ -1,47 +1,23 @@
 import {
-  Mail, Phone, MessageCircle, Clock, MapPin, Headphones,
-  Send, Globe, Shield, CheckCircle2, ArrowLeft
+  MessageCircle, Clock, Headphones,
+  Send, Shield, CheckCircle2, ArrowLeft
 } from 'lucide-react';
 import Link from 'next/link';
 import styles from './support.module.css';
 
 export const metadata = {
-  title: 'الدعم الفني | AURA TRADE & INVEST',
-  description: 'تواصل مع فريق دعم AURA TRADE & INVEST عبر البريد أو الهاتف',
+  title: 'خدمة العملاء | AURA TRADE & INVEST',
+  description: 'تواصل مع فريق خدمة عملاء AURA TRADE & INVEST عبر بوت تيليجرام',
 };
 
 const CONTACT_METHODS = [
   {
-    icon: Mail,
-    title: 'البريد الإلكتروني',
-    value: 'support@aura-trade.com',
-    link: 'mailto:support@aura-trade.com',
-    desc: 'الرد خلال 24 ساعة',
-    color: '#22d3ee',
-  },
-  {
-    icon: Phone,
-    title: 'الهاتف',
-    value: '+963 999 123 456',
-    link: 'tel:+963999123456',
-    desc: 'السبت - الخميس: 9ص - 6م',
-    color: '#16c784',
-  },
-  {
-    icon: MessageCircle,
-    title: 'واتساب',
-    value: '+963 999 123 456',
-    link: 'https://wa.me/963999123456',
-    desc: 'دعم سريع 24/7',
-    color: '#f5b041',
-  },
-  {
     icon: Send,
-    title: 'تيليجرام',
-    value: '@AuraTradeSupport',
-    link: 'https://t.me/AuraTradeSupport',
-    desc: 'قناة رسمية للإعلانات',
-    color: '#8b5cf6',
+    title: 'بوت تيليجرام',
+    value: '@auratrade77_bot',
+    link: 'https://t.me/auratrade77_bot',
+    desc: 'تواصل مباشر مع خدمة العملاء 24/7',
+    color: '#22d3ee',
   },
 ];
 
@@ -52,7 +28,7 @@ const FAQ = [
   },
   {
     q: 'ما هو الحد الأدنى للإيداع؟',
-    a: 'الحد الأدنى هو 10 USDT عبر شبكة TRC20 أو ERC20.',
+    a: 'الحد الأدنى هو 60 USDT عبر شبكة TRC20 أو ERC20.',
   },
   {
     q: 'كيف أسحب أرباحي؟',
@@ -75,10 +51,10 @@ export default function SupportPage() {
           <div className={styles.heroIcon}>
             <Headphones size={32} />
           </div>
-          <h1 className={styles.heroTitle}>الدعم الفني</h1>
+          <h1 className={styles.heroTitle}>خدمة العملاء</h1>
           <p className={styles.heroDesc}>
             فريق AURA TRADE & INVEST جاهز لمساعدتك على مدار الساعة.
-            اختر طريقة التواصل الأنسب لك.
+            تواصل معنا عبر بوت تيليجرام الرسمي.
           </p>
         </div>
 
@@ -90,8 +66,8 @@ export default function SupportPage() {
               <a
                 key={i}
                 href={c.link}
-                target={c.link.startsWith('http') ? '_blank' : undefined}
-                rel={c.link.startsWith('http') ? 'noopener noreferrer' : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
                 className={styles.contactCard}
               >
                 <div
@@ -117,14 +93,8 @@ export default function SupportPage() {
             <h2 className={styles.sectionTitle}>ساعات العمل</h2>
           </div>
           <div className={styles.hoursGrid}>
-            <div className={styles.hoursCard}>
-              <span className={styles.hoursDay}>السبت - الخميس</span>
-              <span className={styles.hoursTime}>9:00 صباحاً - 6:00 مساءً</span>
-            </div>
-            <div className={styles.hoursCard}>
-              <span className={styles.hoursDay}>الجمعة</span>
-              <span className={styles.hoursTime}>مغلق</span>
-            </div>
+           
+           
             <div className={`${styles.hoursCard} ${styles.activeNow}`}>
               <span className={styles.hoursDay}>
                 <span className={styles.dot} />
@@ -135,7 +105,6 @@ export default function SupportPage() {
           </div>
         </div>
 
-       
         {/* FAQ */}
         <div className={styles.infoSection}>
           <div className={styles.sectionHead}>
@@ -160,11 +129,16 @@ export default function SupportPage() {
           <CheckCircle2 size={24} className="text-green" />
           <div>
             <b>لم تجد ما تبحث عنه؟</b>
-            <span>راسلنا وسنكون سعداء بمساعدتك.</span>
+            <span>راسلنا على بوت تيليجرام وسنكون سعداء بمساعدتك.</span>
           </div>
-          <a href="mailto:support@aura-trade.com" className={styles.ctaBtn}>
-            <Mail size={14} />
-            تواصل معنا
+          <a
+            href="https://t.me/auratrade77_bot"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.ctaBtn}
+          >
+            <Send size={14} />
+            فتح البوت
           </a>
         </div>
 
