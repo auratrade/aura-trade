@@ -11,7 +11,7 @@ const FOOTER_LINKS = [
 export default function Footer() {
   return (
     <footer className={styles.footer}>
-      <div className={`${styles.inner} container`}>
+      <div className={styles.inner}>
         <div className={styles.brand}>
           <div className={styles.brandName}>AURA TRADE & INVEST PLATFORM</div>
           <div className={styles.copy}>
