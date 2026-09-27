@@ -260,7 +260,7 @@ export const binanceWallet = {
   // الشبكة الافتراضية
   defaultNetwork: 'BEP20',
 
-  minDeposit: 10,
+  minDeposit: 60,
   minWithdraw: 20,
   withdrawFee: 0,
 

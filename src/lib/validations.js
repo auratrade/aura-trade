@@ -114,7 +114,7 @@ export const depositSchema = z.object({
   amount: z
     .number({ invalid_type_error: 'المبلغ يجب أن يكون رقماً' })
     .positive('المبلغ يجب أن يكون أكبر من صفر')
-    .min(10, 'الحد الأدنى للإيداع 10 USDT')
+    .min(60, 'الحد الأدنى للإيداع 60 USDT')
     .max(1000000, 'المبلغ كبير جداً'),
   network: z.enum(['USDT - TRC20', 'USDT - ERC20', 'USDT - BEP20']),
   txid: z

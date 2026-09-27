@@ -14,12 +14,12 @@ export async function POST(request) {
     const { amount, network, proof } = body;
 
     // 1️⃣ التحقق من المبالغ والشبكة فقط
-    if (!amount || amount < 10) {
-      return NextResponse.json(
-        { error: 'الحد الأدنى للإيداع 10 USDT' },
-        { status: 400 }
-      );
-    }
+if (!amount || amount < 60) {
+  return NextResponse.json(
+    { error: 'الحد الأدنى للإيداع 60 USDT' },
+    { status: 400 }
+  );
+}
     if (!network) {
       return NextResponse.json(
         { error: 'الشبكة مطلوبة' },
