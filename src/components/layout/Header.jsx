@@ -336,40 +336,7 @@ export default function Header() {
                 </div>
 
                {/* ✅ خيار توثيق الحساب */}
-<Link
-  href="/"
-  className={styles.dropdownItem}
-  onClick={() => setShowUser(false)}
-  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
->
-  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-    <BadgeCheck size={14} />
-    توثيق الحساب
-  </span>
-  {isVerifiedUser ? (
-    <span style={{
-      fontSize: '10px',
-      backgroundColor: 'rgba(16, 185, 129, 0.15)',
-      color: '#10b981',
-      padding: '2px 8px',
-      borderRadius: '4px',
-      fontWeight: '600'
-    }}>
-      ✓ موثق
-    </span>
-  ) : (
-    <span style={{
-      fontSize: '10px',
-      backgroundColor: 'rgba(245, 158, 11, 0.15)',
-      color: '#f59e0b',
-      padding: '2px 8px',
-      borderRadius: '4px',
-      fontWeight: '600'
-    }}>
-      غير موثق
-    </span>
-  )}
-</Link>
+
 
                 <Link
                   href="/settings"
