@@ -36,6 +36,7 @@ export default function VerifyIdentityPage() {
   const { user } = useAuth();
   const fileInputRef = useRef(null);
   const toast = useToast();
+  const { registerFromPending } = useAuth();
 const { confirm } = useConfirm();
 
   const [idType, setIdType] = useState('national_id');
@@ -81,7 +82,7 @@ const { confirm } = useConfirm();
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
- const handleSubmit = async (e) => {
+const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
 
@@ -102,10 +103,25 @@ const { confirm } = useConfirm();
   setLoading(true);
 
   try {
-    // ✅ لم نعد نستدعي registerFromPending — المستخدم مسجل بالفعل
+    // ✅ 1) إنشاء الحساب إذا لم يكن موجوداً
+    //    (يستخدم البيانات المحفوظة من صفحة التسجيل)
+    let currentUser = user;
+
+    if (!currentUser) {
+      console.log('🔵 Creating account from pending registration...');
+      currentUser = await registerFromPending({
+        identityType: idType,
+        identityVerified: false,
+      });
+      console.log('✅ Account created:', currentUser);
+    }
+
+    // ✅ 2) الآن أرسل طلب التوثيق
+    //    (المستخدم موجود، والـ cookie محفوظ تلقائياً من registerFromPending)
     const res = await fetch('/api/user/verify-identity', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',  // ✅ مهم لإرسال الـ cookies
       body: JSON.stringify({
         idType,
         frontImage: frontImage.preview,
