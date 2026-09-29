@@ -157,15 +157,19 @@ export async function POST(
           // ------------------------------------------------------
 
           await prismaTx.user.update({
-            where: {
-              id: tx.userId,
-            },
-            data: {
-              totalDeposited: {
-                increment: tx.amount,
-              },
-            },
-          });
+  where: {
+    id: tx.userId,
+  },
+  data: {
+    totalDeposited: {
+      increment: tx.amount,
+    },
+    availableBalance: {
+      increment: tx.amount,
+    },
+    // ❌ withdrawableBalance لا يتغير (رأس المال غير قابل للسحب)
+  },
+});
 
           // ------------------------------------------------------
           // 3️⃣ تفعيل الإحالة إن وجدت

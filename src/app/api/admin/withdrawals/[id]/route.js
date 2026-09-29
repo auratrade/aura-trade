@@ -45,11 +45,11 @@ export async function POST(request, { params }) {
       request.headers.get('x-real-ip') ||
       'unknown';
 
-    const fee = 1; // رسوم السحب
+    const fee = 0; // ✅ بدون رسوم
     const totalLocked = tx.amount + fee;
 
     if (action === 'approve') {
-      // ✅ موافقة — اخصم من lockedBalance
+      // ✅ موافقة — حرّر المقفل فقط + سجّل السحب
       await prisma.$transaction(async (prismaTx) => {
         await prismaTx.transaction.update({
           where: { id },
@@ -64,18 +64,17 @@ export async function POST(request, { params }) {
           },
         });
 
-        // اخصم من الرصيد المقفل
-       await prismaTx.user.update({
-  where: { id: tx.userId },
-  data: {
-    availableBalance: { increment: totalLocked },
-    withdrawableBalance: { increment: totalLocked },   // ✅ جديد
-    lockedBalance: { decrement: totalLocked },
-  },
-});
+        await prismaTx.user.update({
+          where: { id: tx.userId },
+          data: {
+            lockedBalance: { decrement: totalLocked },
+            totalWithdrawn: { increment: totalLocked },
+            // ❌ لا تلمس availableBalance ولا withdrawableBalance
+          },
+        });
       });
 
-      // إنشاء إشعار للمستخدم
+      // إشعار المستخدم
       await prisma.userNotification.create({
         data: {
           userId: tx.userId,
@@ -96,17 +95,13 @@ export async function POST(request, { params }) {
         action: 'approve_withdrawal',
         targetType: 'transaction',
         targetId: id,
-        details: {
-          amount: tx.amount,
-          userId: tx.userId,
-          externalTxid,
-        },
+        details: { amount: tx.amount, userId: tx.userId, externalTxid },
         ipAddress: ip,
       });
 
       return NextResponse.json({ success: true, action: 'approved' });
     } else {
-      // ❌ رفض — أعد المبلغ من lockedBalance إلى availableBalance
+      // ✅ رفض — أرجِع المبلغ كاملاً
       await prisma.$transaction(async (prismaTx) => {
         await prismaTx.transaction.update({
           where: { id },
@@ -119,13 +114,15 @@ export async function POST(request, { params }) {
         await prismaTx.user.update({
           where: { id: tx.userId },
           data: {
-            availableBalance: { increment: totalLocked },
             lockedBalance: { decrement: totalLocked },
+            availableBalance: { increment: totalLocked },
+            withdrawableBalance: { increment: totalLocked },
+            // ❌ لا تلمس totalWithdrawn
           },
         });
       });
 
-      // إنشاء إشعار للمستخدم
+      // إشعار المستخدم
       await prisma.userNotification.create({
         data: {
           userId: tx.userId,

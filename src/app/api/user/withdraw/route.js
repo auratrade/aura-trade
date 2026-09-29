@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
 const MIN_WITHDRAW = 20;
-const FEE = 1;
+const FEE = 0;
 
 export async function POST(request) {
   try {
@@ -28,6 +28,12 @@ export async function POST(request) {
         { status: 400 }
       );
     }
+    if (!network) {
+      return NextResponse.json(
+        { error: 'الشبكة مطلوبة' },
+        { status: 400 }
+      );
+    }
 
     // ============ جلب المستخدم ============
     const user = await prisma.user.findUnique({
@@ -39,6 +45,13 @@ export async function POST(request) {
         username: true,
       },
     });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'المستخدم غير موجود' },
+        { status: 404 }
+      );
+    }
 
     // ============ التحقق من الرصيد القابل للسحب ============
     const totalNeeded = parseFloat(amount) + FEE;
@@ -69,30 +82,30 @@ export async function POST(request) {
     }
 
     // ============ إنشاء المعاملة ============
+    // ✅ طلب السحب: خصم من available + withdrawable، زيادة في locked
+    // ❌ totalWithdrawn لا يُلمس هنا — يُزاد عند الموافقة فقط
     const transaction = await prisma.$transaction(async (tx) => {
-  await tx.user.update({
-    where: { id: session.userId },
-    data: {
-      availableBalance: { decrement: totalNeeded },
-      withdrawableBalance: { decrement: totalNeeded },
-      lockedBalance: { increment: totalNeeded },
-      // ✅ الإصلاح: سجّل السحب فوراً
-      totalWithdrawn: { increment: totalNeeded },
-    },
-  });
+      await tx.user.update({
+        where: { id: session.userId },
+        data: {
+          availableBalance: { decrement: totalNeeded },
+          withdrawableBalance: { decrement: totalNeeded },
+          lockedBalance: { increment: totalNeeded },
+        },
+      });
 
-  return tx.transaction.create({
-    data: {
-      userId: session.userId,
-      type: 'withdraw',
-      amount: parseFloat(amount),
-      network,
-      address,
-      status: 'pending',
-      meta: JSON.stringify({ fee: FEE }),
-    },
-  });
-});
+      return tx.transaction.create({
+        data: {
+          userId: session.userId,
+          type: 'withdraw',
+          amount: parseFloat(amount),
+          network,
+          address,
+          status: 'pending',
+          meta: JSON.stringify({ fee: FEE }),
+        },
+      });
+    });
 
     // ============ إشعار الأدمن ============
     try {

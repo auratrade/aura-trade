@@ -37,7 +37,7 @@ export async function GET() {
         depositBalance: 0,
         completed: false,
         totalRewards: 0,
-        percent: 2,
+        percent: 3.33,
       });
     }
 
@@ -76,7 +76,7 @@ export async function GET() {
       depositBalance,
       completed,
       totalRewards,
-      percent: 2,
+      percent: 3.33,
     });
   } catch (error) {
     console.error('🔥 User missions error:', error);
@@ -85,7 +85,7 @@ export async function GET() {
       depositBalance: 0,
       completed: false,
       totalRewards: 0,
-      percent: 2,
+      percent: 3.33,
     });
   }
 }

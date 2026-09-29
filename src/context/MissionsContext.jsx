@@ -37,7 +37,7 @@ export function MissionsProvider({ children }) {
         setDepositBalance(data.depositBalance || 0);
         setCompleted(data.completed || false);
         setTotalRewards(data.totalRewards || 0);
-        setPercent(data.percent || 2);
+        setPercent(data.percent || 3.33);
       }
     } catch (error) {
       console.error('Load mission error:', error);
