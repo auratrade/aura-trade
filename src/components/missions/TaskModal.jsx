@@ -173,7 +173,7 @@ const handleBuy = async () => {
             <div className={styles.rewardInfo}>
               <Info size={14} />
               <div>
-                <b>{percent}% من رصيد الإيداع</b>
+                <b>3.33% من رصيد الإيداع</b>
                 <span>
                   رصيد إيداعك: <b className="mono">${depositBalance.toFixed(2)}</b> →
                   مكافأة كل مهمة = <b className="mono text-green">${rewardPerMission.toFixed(2)}</b>

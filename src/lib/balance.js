@@ -4,29 +4,17 @@ import { prisma } from './prisma';
  * حساب الرصيد المتاح للمستخدم
  * = الإيداعات المكتملة - السحوبات المكتملة + الأرباح - الخسائر
  */
-export async function calculateAvailableBalance(userId) {
+export async function calculateTotalValue(userId) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       availableBalance: true,
-      totalDeposited: true,
-      totalWithdrawn: true,
-      totalProfit: true,
-      totalLoss: true,
       lockedBalance: true,
     },
   });
 
   if (!user) return 0;
-
-  const calculated =
-    user.totalDeposited -
-    user.totalWithdrawn +
-    user.totalProfit -
-    user.totalLoss -
-    user.lockedBalance;
-
-  return Math.max(0, calculated);
+  return user.availableBalance + user.lockedBalance;
 }
 
 /**
@@ -53,29 +41,17 @@ export async function updateUserBalances(userId) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
-      totalDeposited: true,
-      totalWithdrawn: true,
-      totalProfit: true,
-      totalLoss: true,
+      availableBalance: true,
       lockedBalance: true,
     },
   });
+ if (!user) return null;
 
-  if (!user) return null;
-
-  const availableBalance =
-    user.totalDeposited -
-    user.totalWithdrawn +
-    user.totalProfit -
-    user.totalLoss -
-    user.lockedBalance;
-
-  const totalValue = availableBalance + user.lockedBalance;
+  const totalValue = user.availableBalance + user.lockedBalance;
 
   return prisma.user.update({
     where: { id: userId },
     data: {
-      availableBalance: Math.max(0, availableBalance),
       totalValue: Math.max(0, totalValue),
     },
     select: {
@@ -136,18 +112,29 @@ async function applyTransactionEffect(userId, type, amount) {
   switch (type) {
     case 'deposit':
       updates.totalDeposited = { increment: amount };
+      updates.availableBalance = { increment: amount };  // ✅ أضف الرصيد
       break;
+
     case 'withdraw':
-      updates.totalWithdrawn = { increment: amount };
+      // ⚠️ عند الموافقة على السحب: lockedBalance ينقص فقط
+      //    (totalWithdrawn و availableBalance خُصما عند إنشاء الطلب)
+      updates.lockedBalance = { decrement: amount };
       break;
+
     case 'mission':
     case 'referral':
     case 'vip':
     case 'trade':
       updates.totalProfit = { increment: amount };
+      updates.availableBalance = { increment: amount };  // ✅ أضف الرصيد
+      if (type === 'referral' || type === 'mission' || type === 'vip') {
+        updates.withdrawableBalance = { increment: amount };  // ✅ قابل للسحب
+      }
       break;
+
     case 'loss':
       updates.totalLoss = { increment: amount };
+      updates.availableBalance = { decrement: amount };  // ✅ اخصم
       break;
   }
 
@@ -156,7 +143,7 @@ async function applyTransactionEffect(userId, type, amount) {
     data: updates,
   });
 
-  await updateUserBalances(userId);
+  await updateUserBalances(userId);  // ✅ يُحدّث totalValue فقط الآن
 }
 
 /**

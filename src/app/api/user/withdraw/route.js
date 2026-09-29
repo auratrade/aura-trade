@@ -70,29 +70,29 @@ export async function POST(request) {
 
     // ============ إنشاء المعاملة ============
     const transaction = await prisma.$transaction(async (tx) => {
-      // انقل المبلغ من الأرباح إلى lockedBalance
-      await tx.user.update({
-        where: { id: session.userId },
-        data: {
-          availableBalance: { decrement: totalNeeded },
-          withdrawableBalance: { decrement: totalNeeded },
-          lockedBalance: { increment: totalNeeded },
-        },
-      });
+  await tx.user.update({
+    where: { id: session.userId },
+    data: {
+      availableBalance: { decrement: totalNeeded },
+      withdrawableBalance: { decrement: totalNeeded },
+      lockedBalance: { increment: totalNeeded },
+      // ✅ الإصلاح: سجّل السحب فوراً
+      totalWithdrawn: { increment: totalNeeded },
+    },
+  });
 
-      // أنشئ المعاملة
-      return tx.transaction.create({
-        data: {
-          userId: session.userId,
-          type: 'withdraw',
-          amount: parseFloat(amount),
-          network,
-          address,
-          status: 'pending',
-          meta: JSON.stringify({ fee: FEE }),
-        },
-      });
-    });
+  return tx.transaction.create({
+    data: {
+      userId: session.userId,
+      type: 'withdraw',
+      amount: parseFloat(amount),
+      network,
+      address,
+      status: 'pending',
+      meta: JSON.stringify({ fee: FEE }),
+    },
+  });
+});
 
     // ============ إشعار الأدمن ============
     try {

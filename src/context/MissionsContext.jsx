@@ -15,7 +15,7 @@ export function MissionsProvider({ children }) {
   const [depositBalance, setDepositBalance] = useState(0);
   const [completed, setCompleted] = useState(false);
   const [totalRewards, setTotalRewards] = useState(0);
-  const [percent, setPercent] = useState(2);
+  const [percent, setPercent] = useState(3.33);
   const [loading, setLoading] = useState(true);
 
   // سجل المهام
