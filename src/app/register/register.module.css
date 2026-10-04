@@ -1,0 +1,556 @@
+/* =========================================
+   صفحة إنشاء حساب جديد - مستقلة تماماً
+   ========================================= */
+
+.page {
+  position: relative;
+  min-height: calc(100vh - 160px);
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+  overflow: hidden;
+}
+
+.glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(245, 176, 65, 0.15), transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
+  padding: 32px 28px;
+  width: 100%;
+  max-width: 520px;
+  box-shadow: var(--shadow-md);
+}
+
+/* ============ Brand ============ */
+.brand {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  color: #0a0f1c;
+  font-size: 28px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+  box-shadow: var(--shadow-glow-gold);
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ============ Form ============ */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field > span {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.inputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 0 12px;
+  transition: border-color 0.2s ease;
+}
+
+.inputWrap:focus-within {
+  border-color: var(--gold);
+}
+
+.inputWrap > svg:first-child {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.inputWrap input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 12px 0;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.inputWrap input::placeholder {
+  color: var(--text-muted);
+}
+
+.eyeBtn {
+  color: var(--text-secondary);
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+
+.eyeBtn:hover {
+  color: var(--gold);
+}
+
+/* ============ الصف المزدوج ============ */
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ============ Error ============ */
+.error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--red-soft);
+  border: 1px solid rgba(234, 57, 67, 0.3);
+  border-radius: 8px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ============ Submit ============ */
+.submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  color: #0a0f1c;
+  font-weight: 800;
+  font-size: 14px;
+  margin-top: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  box-shadow: 0 0 24px rgba(245, 176, 65, 0.4);
+  transform: translateY(-1px);
+}
+
+.submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============ Footer ============ */
+.footer {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.link {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* =========================================
+   OTP SECTION
+   ========================================= */
+
+.otpHeader {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.otpIconWrap {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: var(--gold-soft);
+  color: var(--gold);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 14px;
+  box-shadow: 0 0 24px rgba(245, 176, 65, 0.2);
+  animation: popIn 0.4s ease;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.otpTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.otpSubtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.otpSubtitle b {
+  color: var(--gold);
+  font-weight: 700;
+  font-size: 12px;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+}
+
+/* ============ OTP Inputs ============ */
+.otpInputs {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  direction: ltr;
+  margin: 8px 0 12px;
+}
+
+.otpInput {
+  width: 46px;
+  height: 56px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  background: var(--bg-card-2);
+  border: 2px solid var(--border-subtle);
+  border-radius: 12px;
+  color: var(--text-primary);
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: 'Courier New', monospace;
+  caret-color: var(--gold);
+}
+
+.otpInput:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 12px rgba(245, 176, 65, 0.35);
+  transform: translateY(-2px);
+  background: var(--bg-elevated);
+}
+
+.otpInput:not(:placeholder-shown) {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+
+/* ============ Timer ============ */
+.otpTimer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-align: center;
+  flex-wrap: wrap;
+}
+
+.otpTimer svg {
+  color: var(--cyan);
+  flex-shrink: 0;
+}
+
+.otpTimer b {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.otpTimer b.text-gold {
+  color: var(--gold);
+}
+
+/* ============ Resend Row ============ */
+.resendRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 12px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.resendBtn,
+.changeEmailBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.resendBtn {
+  color: var(--gold);
+}
+
+.resendBtn:hover:not(:disabled) {
+  background: var(--gold-soft);
+}
+
+.resendBtn:disabled {
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.changeEmailBtn {
+  color: var(--text-secondary);
+}
+
+.changeEmailBtn:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-2);
+}
+
+/* =========================================
+   Responsive
+   ========================================= */
+
+@media (max-width: 640px) {
+  .card {
+    padding: 24px 20px;
+    border-radius: var(--radius-lg);
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+  }
+
+  .title {
+    font-size: 18px;
+  }
+
+  .otpTitle {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .otpInput {
+    width: 40px;
+    height: 50px;
+    font-size: 18px;
+    border-radius: 10px;
+  }
+
+  .otpInputs {
+    gap: 5px;
+  }
+
+  .otpIconWrap {
+    width: 52px;
+    height: 52px;
+  }
+
+  .resendRow {
+    justify-content: center;
+  }
+
+  .resendBtn,
+  .changeEmailBtn {
+    font-size: 11px;
+    padding: 7px 10px;
+  }
+}
+
+/* ============ Field Errors ============ */
+.inputError {
+  border-color: var(--red) !important;
+  background: var(--red-soft);
+}
+
+.fieldError {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--red);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* ============ Password Strength ============ */
+.passwordStrength {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.strengthBars {
+  display: flex;
+  gap: 3px;
+  flex: 1;
+}
+
+.strengthBar {
+  height: 4px;
+  flex: 1;
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+.strengthText {
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ============ Requirements ============ */
+.requirements {
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-top: -4px;
+}
+
+.reqTitle {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.reqList {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.reqItem {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.reqItem svg {
+  flex-shrink: 0;
+}
+
+.reqMet {
+  color: var(--green);
+}
+
+@media (max-width: 480px) {
+  .reqList {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============ Referral Banner ============ */
+.referralBanner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, var(--gold-soft), var(--green-soft));
+  border: 1px solid rgba(245, 176, 65, 0.4);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  animation: slideDown 0.35s ease;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.referralBanner svg {
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.referralBanner b {
+  display: block;
+  font-size: 12px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.referralBanner span {
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.inputHighlight {
+  border-color: var(--green) !important;
+  background: var(--green-soft) !important;
+}

@@ -1,0 +1,24 @@
+.ticker {
+  margin-top: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 10px 0;
+  overflow: hidden;
+  position: relative;
+}
+.track {
+  display: flex;
+  gap: 40px;
+  padding: 0 20px;
+  animation: scroll 40s linear infinite;
+  white-space: nowrap;
+}
+@keyframes scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(50%); }
+}
+.item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.symbol { font-weight: 700; color: var(--text-primary); }
+.price { color: var(--text-secondary); }
+.change { font-weight: 600; }

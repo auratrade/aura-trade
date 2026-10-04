@@ -1,0 +1,23 @@
+.page { padding: 20px; display: flex; flex-direction: column; }
+
+.tradingGrid {
+  display: grid;
+  grid-template-columns: 1.8fr 1fr;
+  gap: 14px;
+  align-items: stretch;
+}
+.chartCol { display: flex; flex-direction: column; gap: 14px; }
+.orderCol { display: flex; flex-direction: column; gap: 14px; }
+
+.chartUnder { margin-top: 4px; }
+
+.referralGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+@media (max-width: 1100px) {
+  .tradingGrid { grid-template-columns: 1fr; }
+  .referralGrid { grid-template-columns: 1fr; }
+}

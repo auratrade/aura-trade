@@ -1,0 +1,343 @@
+/* ============ States: Loading / Empty / Expired ============ */
+.loading,
+.empty,
+.expired {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, var(--radius));
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.emptyIconWrap,
+.expiredIcon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--bg-card-2);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+}
+
+.emptyTitle,
+.expiredTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.emptyText,
+.expiredText {
+  font-size: 12px;
+  color: var(--text-secondary);
+  max-width: 280px;
+}
+
+.refreshBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.refreshBtn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ============ Summary Bar ============ */
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.summaryItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+.summaryIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bg-card-2);
+  color: var(--text-secondary);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.summaryIcon.gold { background: var(--gold-soft); color: var(--gold); }
+.summaryIcon.cyan { background: var(--cyan-soft); color: var(--cyan); }
+
+.summaryLabel { font-size: 10px; color: var(--text-secondary); }
+.summaryValue { font-size: 15px; font-weight: 800; margin-top: 2px; }
+
+/* ============ Warning ============ */
+.warningBox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: var(--gold-soft);
+  border: 1px solid rgba(245, 176, 65, 0.3);
+  border-radius: var(--radius);
+  color: var(--gold);
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+/* ============ Mission Card ============ */
+.missionCard {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg, var(--radius));
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.missionCompleted {
+  opacity: 0.75;
+}
+
+.liveBadge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--green);
+  background: var(--green-soft);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: blink 1.5s infinite;
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.missionHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.missionIconWrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--gold-soft);
+  color: var(--gold);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.missionInfo { flex: 1; min-width: 0; }
+.missionTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.missionMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.rewardTag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  background: var(--green-soft);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* ============ Time Grid ============ */
+.timeGrid {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--bg-card-2);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+}
+.timeBlock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.timeIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--green);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.timeLabel { font-size: 10px; color: var(--text-secondary); }
+.timeValue { font-size: 13px; font-weight: 800; color: var(--text-primary); }
+.timeDate { font-size: 10px; color: var(--text-muted); }
+.timeArrow { color: var(--text-muted); font-size: 16px; }
+
+/* ============ Countdown ============ */
+.countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: var(--bg-card-2);
+  border-radius: var(--radius);
+}
+.countdownLabel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+.countdownTimer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.timeUnit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 44px;
+}
+.timeNum {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+.timeLbl {
+  font-size: 9px;
+  color: var(--text-secondary);
+}
+.timeSep {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+
+/* ============ Progress ============ */
+.progressBar {
+  height: 6px;
+  background: var(--bg-card-2);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--orange));
+  border-radius: 6px;
+  transition: width 0.5s ease;
+}
+
+/* ============ Action ============ */
+.missionAction {
+  display: flex;
+}
+.completedBox,
+.lockedBox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.completedBox {
+  background: var(--green-soft);
+  color: var(--green);
+}
+.lockedBox {
+  background: var(--bg-card-2);
+  color: var(--text-muted);
+}
+.startBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  color: #0a0f1c;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.startBtn:hover {
+  box-shadow: 0 0 20px rgba(245, 176, 65, 0.4);
+  transform: translateY(-1px);
+}
+
+/* ============ Responsive ============ */
+@media (max-width: 640px) {
+  .summary { grid-template-columns: 1fr; }
+  .timeGrid { flex-direction: column; align-items: stretch; }
+  .timeArrow { display: none; }
+  .countdownTimer { gap: 6px; }
+  .timeUnit { min-width: 38px; }
+  .timeNum { font-size: 18px; }
+}

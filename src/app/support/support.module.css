@@ -1,0 +1,314 @@
+.page {
+  position: relative;
+  padding: 40px 0;
+  overflow: hidden;
+  min-height: calc(100vh - 160px);
+}
+
+.glow {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(245, 176, 65, 0.12), transparent 70%);
+  filter: blur(80px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 1000px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 20px 0 30px;
+}
+.heroIcon {
+  width: 80px;
+  height: 80px;
+  border-radius: 24px;
+  background: var(--gold-soft);
+  color: var(--gold);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 16px;
+  box-shadow: var(--shadow-glow-gold);
+}
+.heroTitle {
+  font-size: 32px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+.heroDesc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+/* Contacts Grid */
+.contactsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+.contactCard {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: all 0.25s ease;
+}
+.contactCard:hover {
+  border-color: var(--gold);
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+.contactIcon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.contactInfo {
+  flex: 1;
+  min-width: 0;
+}
+.contactLabel {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+.contactValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+.contactDesc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* Info Sections */
+.infoSection {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  color: var(--gold);
+}
+.sectionHead svg {
+  flex-shrink: 0;
+}
+.sectionTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+/* Hours */
+.hoursGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.hoursCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  background: var(--bg-card-2);
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+.hoursCard.activeNow {
+  border-color: rgba(22, 199, 132, 0.4);
+  background: var(--green-soft);
+}
+.hoursDay {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.hoursTime {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Address */
+.addressBox {
+  padding: 16px;
+  background: var(--bg-card-2);
+  border-radius: var(--radius);
+  border-right: 3px solid var(--gold);
+}
+.addressText {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.9;
+}
+
+/* FAQ */
+.faqList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.faqItem {
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.faqItem[open] {
+  border-color: var(--gold);
+}
+.faqQuestion {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  list-style: none;
+  user-select: none;
+}
+.faqQuestion::-webkit-details-marker {
+  display: none;
+}
+.faqChevron {
+  font-size: 20px;
+  font-weight: 300;
+  color: var(--gold);
+  transition: transform 0.2s;
+}
+.faqItem[open] .faqChevron {
+  transform: rotate(45deg);
+}
+.faqAnswer {
+  padding: 0 16px 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* CTA */
+.cta {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  background: linear-gradient(135deg, var(--green-soft), var(--cyan-soft));
+  border: 1px solid rgba(22, 199, 132, 0.3);
+  border-radius: var(--radius-lg);
+  flex-wrap: wrap;
+}
+.cta svg { flex-shrink: 0; }
+.cta > div {
+  flex: 1;
+  min-width: 200px;
+}
+.cta b {
+  display: block;
+  font-size: 14px;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+.cta span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, var(--gold), var(--orange));
+  color: #0a0f1c;
+  font-weight: 800;
+  font-size: 12px;
+  border-radius: 10px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.ctaBtn:hover {
+  box-shadow: var(--shadow-glow-gold);
+  transform: translateY(-1px);
+}
+
+/* Back Link */
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 10px 16px;
+  border-radius: 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.2s;
+}
+.backLink:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .contactsGrid { grid-template-columns: 1fr; }
+  .hoursGrid { grid-template-columns: 1fr; }
+  .heroTitle { font-size: 24px; }
+  .heroIcon { width: 64px; height: 64px; }
+  .cta { flex-direction: column; align-items: stretch; text-align: center; }
+  .ctaBtn { justify-content: center; }
+}

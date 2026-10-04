@@ -1,0 +1,241 @@
+/* MissionHistory.module.css */
+
+.missionHistory {
+  direction: rtl;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  gap: 16px;
+}
+
+.header h2 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-primary, #ffffff);
+  margin: 0 0 4px 0;
+}
+
+.header p {
+  font-size: 13px;
+  color: var(--text-secondary, #7d8aab);
+  margin: 0;
+}
+
+.count {
+  padding: 8px 16px;
+  background: var(--bg-card-2, #1a2234);
+  border: 1px solid var(--border-subtle, #2a3447);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold, #f5b041);
+  white-space: nowrap;
+}
+
+/* Loading & Empty States */
+.loading,
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 20px;
+  background: var(--bg-elevated, #141c2e);
+  border: 1px solid var(--border-color, #2a3447);
+  border-radius: 16px;
+  text-align: center;
+  color: var(--text-secondary, #7d8aab);
+}
+
+.empty svg {
+  color: var(--gold, #f5b041);
+  opacity: 0.85;
+}
+
+.empty h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+  margin: 0;
+}
+
+.empty p {
+  font-size: 13px;
+  margin: 0;
+  color: var(--text-secondary, #7d8aab);
+}
+
+/* History List */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Item Card */
+.item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: var(--bg-elevated, #141c2e);
+  border: 1px solid var(--border-subtle, #2a3447);
+  border-radius: 14px;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.item:hover {
+  border-color: rgba(22, 199, 132, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Icon */
+.icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(22, 199, 132, 0.12);
+  color: var(--green, #16c784);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+/* Info */
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.info h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+  margin: 0;
+}
+
+.date {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary, #7d8aab);
+}
+
+/* Reward Badge */
+.reward {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: var(--bg-card-2, #1a2234);
+  border: 1px solid var(--border-subtle, #2a3447);
+  border-radius: 10px;
+}
+
+.rewardIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: rgba(245, 176, 65, 0.15);
+  color: var(--gold, #f5b041);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.reward div {
+  display: flex;
+  flex-direction: column;
+}
+
+.reward span {
+  font-size: 10px;
+  color: var(--text-secondary, #7d8aab);
+}
+
+.reward strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--green, #16c784);
+}
+
+/* Details Section (Deposit & Percent) */
+.details {
+  display: flex;
+  gap: 16px;
+  padding-right: 14px;
+  border-right: 1px solid var(--border-subtle, #2a3447);
+}
+
+.details div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.details span {
+  font-size: 10px;
+  color: var(--text-secondary, #7d8aab);
+  margin-bottom: 2px;
+}
+
+.details strong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary, #ffffff);
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .item {
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+      "icon info"
+      "reward details";
+    gap: 12px;
+  }
+
+  .icon { grid-area: icon; }
+  .info { grid-area: info; }
+  .reward { grid-area: reward; }
+
+  .details {
+    grid-area: details;
+    border-right: none;
+    border-top: 1px solid var(--border-subtle, #2a3447);
+    padding-right: 0;
+    padding-top: 10px;
+    justify-content: space-around;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .details {
+    justify-content: space-between;
+  }
+}

@@ -1,0 +1,233 @@
+/* ============================================
+   FOOTER - BASE
+   ============================================ */
+.footer {
+  margin-top: 40px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  /* ✅ مساحة سفلية احتياطية للـ Bottom Nav على الموبايل */
+  padding-bottom: 0;
+  width: 100%;
+  overflow: hidden; /* منع أي تمرير أفقي */
+}
+
+.inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  padding: 28px 20px;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* ============================================
+   BRAND SECTION
+   ============================================ */
+.brand {
+  flex: 1 1 320px;
+  min-width: 0; /* ✅ مهم لمنع كسر flex */
+  max-width: 100%;
+}
+
+.brandName {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--text-primary);
+  line-height: 1.4;
+  overflow-wrap: break-word; /* ✅ كسر الكلمات الطويلة */
+}
+
+.copy {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+.note {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+  max-width: 520px;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+/* ============================================
+   LINKS SECTION
+   ============================================ */
+.links {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.links a {
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+  white-space: nowrap; /* ✅ منع كسر اسم الرابط */
+  text-decoration: none;
+}
+
+.links a:hover {
+  color: var(--gold);
+}
+
+/* ============================================
+   RESPONSIVE - Tablet (≤ 900px)
+   ============================================ */
+@media (max-width: 900px) {
+  .inner {
+    gap: 20px;
+    padding: 24px 18px;
+  }
+
+  .brand {
+    flex: 1 1 100%;
+  }
+
+  .links {
+    flex: 1 1 100%;
+    justify-content: flex-start;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - Mobile (≤ 640px)
+   ============================================ */
+@media (max-width: 640px) {
+  .footer {
+    margin-top: 28px;
+    /* ✅ مساحة للـ Bottom Nav (~64px) + safe-area */
+    padding-bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .inner {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 18px;
+    padding: 22px 16px;
+  }
+
+  .brand {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .brandName {
+    font-size: 12px;
+    letter-spacing: 0.3px;
+  }
+
+  .copy {
+    font-size: 11px;
+    margin-top: 6px;
+  }
+
+  .note {
+    font-size: 10px;
+    margin-top: 6px;
+    max-width: 100%;
+  }
+
+  /* ✅ روابط في المنتصف، مع التفاف أنيق */
+  .links {
+    justify-content: center;
+    gap: 10px 16px;
+    flex: 1 1 100%;
+    padding-top: 14px;
+    border-top: 1px solid var(--border-subtle);
+    width: 100%;
+  }
+
+  .links a {
+    font-size: 11px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - Small Mobile (≤ 380px)
+   ============================================ */
+@media (max-width: 380px) {
+  .footer {
+    margin-top: 20px;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .inner {
+    gap: 14px;
+    padding: 18px 12px;
+  }
+
+  .brandName {
+    font-size: 11px;
+    letter-spacing: 0.2px;
+  }
+
+  .copy {
+    font-size: 10px;
+  }
+
+  .note {
+    font-size: 9.5px;
+    line-height: 1.5;
+  }
+
+  /* ✅ كل رابط في سطر منفصل على الشاشات الصغيرة جداً */
+  .links {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+    padding-top: 12px;
+  }
+
+  .links a {
+    font-size: 11px;
+    padding: 4px 0;
+  }
+}
+
+/* ============================================
+   LANDSCAPE MODE على الموبايل
+   ============================================ */
+@media (max-height: 500px) and (orientation: landscape) {
+  .footer {
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .inner {
+    flex-direction: row;
+    text-align: right;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  .brand {
+    flex: 1 1 60%;
+  }
+
+  .links {
+    flex: 1 1 auto;
+    border-top: none;
+    padding-top: 0;
+    justify-content: flex-end;
+  }
+}
+
+/* ============================================
+   RTL SUPPORT
+   ============================================ */
+:root[dir='rtl'] .links,
+[dir='rtl'] .links {
+  direction: rtl;
+}

@@ -1,0 +1,60 @@
+.page { display: flex; flex-direction: column; gap: 20px; }
+.pageHead {
+  display: flex; justify-content: space-between;
+  align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.pageTitle {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 22px; font-weight: 800; color: var(--text-primary);
+}
+.pageTitle svg { color: var(--gold); }
+.actions { display: flex; gap: 8px; }
+.markBtn, .refreshBtn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px; border-radius: 10px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card); color: var(--text-secondary);
+}
+.markBtn:hover, .refreshBtn:hover {
+  color: var(--gold); border-color: var(--gold);
+}
+.list { display: flex; flex-direction: column; gap: 8px; }
+.item {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 16px; background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: all 0.2s; position: relative;
+}
+.item:hover { border-color: var(--border-color); transform: translateX(-2px); }
+.unread {
+  background: linear-gradient(90deg, var(--gold-soft), var(--bg-card));
+  border-color: rgba(245, 176, 65, 0.3);
+}
+.icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: grid; place-items: center; flex-shrink: 0;
+}
+.icon.deposit { background: var(--green-soft); color: var(--green); }
+.icon.withdraw { background: var(--red-soft); color: var(--red); }
+.icon.system { background: var(--cyan-soft); color: var(--cyan); }
+.content { flex: 1; }
+.title { font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.message { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+.date { font-size: 10px; color: var(--text-muted); }
+.dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--gold); position: absolute;
+  top: 16px; left: 16px;
+  box-shadow: 0 0 8px var(--gold);
+}
+.loading, .empty {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; padding: 60px;
+  color: var(--text-secondary); font-size: 13px;
+}
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }

@@ -1,0 +1,426 @@
+/* ============================================
+   BOTTOM NAVIGATION
+   ============================================ */
+.bottomNav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(10, 15, 28, 0.92);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border-subtle);
+  padding: 6px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+  transition: background 0.25s ease;
+}
+
+:root[data-theme='light'] .bottomNav {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.navInner {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  padding: 0 6px;
+  /* ✅ لو أي شاشة أضيق من المجموع الأدنى للعناصر،
+     نسمح بالتمرير الأفقي بدل ما تتراكب/تنقص العناصر */
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.navInner::-webkit-scrollbar { display: none; }
+
+/* ============================================
+   NAV ITEM
+   ============================================ */
+.navItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  /* ✅ عرض مرن بدل min-width ثابت كبير — بيصغر بانسجام
+     مع الشاشة بدل ما يفرض عرض أوسع من الشاشة نفسها */
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 84px;
+}
+
+.navItem:hover {
+  color: var(--text-primary);
+  background: var(--bg-card);
+}
+
+.navIconWrap {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.navLabel {
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ============================================
+   ACTIVE ITEM
+   ============================================ */
+.activeItem {
+  color: var(--gold);
+}
+
+.activeItem:hover {
+  color: var(--gold);
+}
+
+.activeDot {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+
+/* ============================================
+   USER AVATAR
+   ============================================ */
+.userAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #1e3a8a, #0e7490);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   BADGE
+   ============================================ */
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: var(--red);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 5px;
+  border-radius: 10px;
+  min-width: 16px;
+  text-align: center;
+  line-height: 1.2;
+}
+
+/* ============================================
+   DROPDOWN WRAPPER
+   ============================================ */
+.dropdownWrap {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 84px;
+  display: flex;
+  justify-content: center;
+}
+
+/* ============================================
+   DROPDOWN (opens UPWARD)
+   ✅ مثبّتة بالنسبة للشاشة (position: fixed) ومتمركزة
+   أفقيًا بعرض الفيوبورت — مش بموقع الزر — عشان ما
+   تنقص أو تطلع بره الشاشة بغض النظر وين الزر واقف
+   ============================================ */
+.dropdown {
+  position: fixed;
+  bottom: calc(64px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: min(340px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
+  max-height: min(420px, calc(100vh - 140px));
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.5);
+  padding: 8px;
+  z-index: 200;
+  animation: slideUpFade 0.25s ease;
+  box-sizing: border-box;
+}
+
+@keyframes slideUpFade {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* ============================================
+   MORE DROPDOWN
+   ============================================ */
+.moreDropdown {
+  width: min(180px, calc(100vw - 24px));
+}
+
+/* ============================================
+   NOTIFICATIONS DROPDOWN
+   ============================================ */
+.notifDropdown {
+  width: min(340px, calc(100vw - 24px));
+  padding: 0;
+}
+
+.notifHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.markAllBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--gold);
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--gold-soft);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.markAllBtn:hover {
+  background: var(--gold);
+  color: #0a0f1c;
+}
+
+.notifList {
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.notifList::-webkit-scrollbar { width: 4px; }
+.notifList::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+.notifItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
+}
+
+.notifItem:hover {
+  background: var(--bg-card-2);
+}
+
+.notifItem:last-child {
+  border-bottom: none;
+}
+
+.unreadNotif {
+  background: linear-gradient(90deg, var(--gold-soft), transparent);
+}
+
+.notifIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.notifContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.notifTitle {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  overflow-wrap: break-word;
+}
+
+.notifMsg {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 4px;
+  overflow-wrap: break-word;
+}
+
+.notifDate {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.unreadDot {
+  position: absolute;
+  top: 16px;
+  left: 10px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+}
+
+.emptyNotif {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* ============================================
+   USER DROPDOWN
+   ============================================ */
+.userDropdown {
+  width: min(240px, calc(100vw - 24px));
+}
+
+.userHead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 6px;
+}
+
+.userHeadAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #1e3a8a, #0e7490);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.userHeadName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+}
+
+.userHeadRole {
+  font-size: 10px;
+  color: var(--gold);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* ============================================
+   DROPDOWN ITEM
+   ============================================ */
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  color: var(--text-primary);
+  width: 100%;
+  text-align: right;
+  transition: background 0.15s;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  box-sizing: border-box;
+}
+
+.dropdownItem:hover {
+  background: var(--bg-card-2);
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 6px 0;
+}
+
+.danger { color: var(--red); }
+.danger:hover { background: var(--red-soft); }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+/* شاشات صغيرة جدًا (320-380px) */
+@media (max-width: 380px) {
+  .navInner { gap: 0; padding: 0 2px; }
+  .navItem, .dropdownWrap { max-width: none; padding: 6px 2px; }
+  .navLabel { font-size: 9px; max-width: 100%; }
+  .navIconWrap { width: 20px; height: 20px; }
+  .userAvatar { width: 20px; height: 20px; }
+  .dropdown { bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
+}
+
+@media (max-width: 480px) {
+  .notifDropdown,
+  .dropdown { width: calc(100vw - 16px); max-width: calc(100vw - 16px); }
+}
+
+@media (min-width: 900px) {
+  .navInner {
+    max-width: 800px;
+    overflow-x: visible;
+  }
+}

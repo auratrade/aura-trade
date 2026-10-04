@@ -1,0 +1,171 @@
+.wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.pair { display: flex; align-items: center; gap: 10px; }
+.star {
+  width: 30px; height: 30px;
+  border-radius: 8px;
+  background: var(--bg-card-2);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  display: grid; place-items: center;
+}
+.pairName { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+.pairMeta { font-size: 10px; color: var(--text-secondary); }
+.priceBox { text-align: left; }
+.price { font-size: 18px; font-weight: 700; }
+.change { font-size: 12px; font-weight: 600; }
+
+.toolbar {
+  display: flex; justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.intervals { display: flex; gap: 4px; }
+.intervalBtn {
+  font-size: 11px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+.intervalBtn:hover { background: var(--bg-card-2); color: var(--text-primary); }
+.active { background: var(--gold-soft); color: var(--gold); }
+
+.rightTools { display: flex; gap: 4px; }
+.tool {
+  font-size: 11px; padding: 5px 10px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+.tool.active { background: var(--bg-card-2); color: var(--text-primary); }
+
+.chartBox { flex: 1; min-height: 240px; }
+.svg { width: 100%; height: 100%; }
+
+.statsRow {
+  display: flex; gap: 20px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-subtle);
+}
+.statsRow b { color: var(--text-primary); }
+
+/* ============ LIVE INDICATOR ============ */
+.liveIndicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--green-soft);
+  border: 1px solid rgba(22, 199, 132, 0.3);
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--green);
+  margin-right: 8px;
+}
+.liveIcon {
+  animation: pulseIcon 2s ease-in-out infinite;
+}
+@keyframes pulseIcon {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green);
+  animation: pulseDot 1.5s ease-in-out infinite;
+}
+@keyframes pulseDot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.6;
+  }
+}
+
+/* ============ LIVE PRICE FLASH ============ */
+.priceFlash {
+  animation: priceFlashAnim 0.3s ease;
+}
+@keyframes priceFlashAnim {
+  0% { color: var(--gold); }
+  100% { color: var(--text-primary); }
+}
+
+/* ============ LAST CANDLE GLOW ============ */
+.lastCandle {
+  filter: drop-shadow(0 0 4px currentColor);
+}
+.glowCandle {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+
+/* ============ LINE ANIMATIONS ============ */
+.linePath {
+  stroke-dasharray: 2000;
+  stroke-dashoffset: 0;
+  transition: all 0.3s ease;
+}
+.pulseCircle {
+  filter: drop-shadow(0 0 6px var(--green));
+  animation: dotPulse 1.5s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%, 100% { r: 4; opacity: 1; }
+  50% { r: 5.5; opacity: 0.8; }
+}
+.pulseRing {
+  animation: ringExpand 2s ease-out infinite;
+  transform-origin: center;
+}
+@keyframes ringExpand {
+  0% {
+    r: 4;
+    opacity: 1;
+  }
+  100% {
+    r: 14;
+    opacity: 0;
+  }
+}
+
+/* ============ LIVE STATS ============ */
+.liveStats {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: auto;
+  color: var(--green);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+/* مسافة بين الرسم والأزرار */
+.statsRow + div {
+  margin-top: 12px;
+}

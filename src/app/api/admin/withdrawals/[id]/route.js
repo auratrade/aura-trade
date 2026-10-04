@@ -1,0 +1,156 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { getCurrentAdmin, logAdminAction } from '@/lib/admin-auth';
+import { updateUserBalances } from '@/lib/balance';
+
+export async function POST(request, { params }) {
+  try {
+    const session = await getCurrentAdmin();
+    if (!session) {
+      return NextResponse.json({ error: 'غير مصرّح' }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const body = await request.json();
+    const { action, reason, externalTxid } = body;
+
+    if (!['approve', 'reject'].includes(action)) {
+      return NextResponse.json(
+        { error: 'الإجراء غير صالح' },
+        { status: 400 }
+      );
+    }
+
+    const tx = await prisma.transaction.findUnique({
+      where: { id },
+      include: { user: { select: { id: true, username: true } } },
+    });
+
+    if (!tx) {
+      return NextResponse.json(
+        { error: 'العملية غير موجودة' },
+        { status: 404 }
+      );
+    }
+
+    if (tx.status !== 'pending') {
+      return NextResponse.json(
+        { error: 'العملية معالجة بالفعل' },
+        { status: 400 }
+      );
+    }
+
+    const ip =
+      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
+
+    const fee = 0; // ✅ بدون رسوم
+    const totalLocked = tx.amount + fee;
+
+    if (action === 'approve') {
+      // ✅ موافقة — حرّر المقفل فقط + سجّل السحب
+      await prisma.$transaction(async (prismaTx) => {
+        await prismaTx.transaction.update({
+          where: { id },
+          data: {
+            status: 'completed',
+            meta: JSON.stringify({
+              fee,
+              externalTxid: externalTxid || null,
+              approvedBy: session.admin.id,
+              approvedAt: new Date().toISOString(),
+            }),
+          },
+        });
+
+        await prismaTx.user.update({
+          where: { id: tx.userId },
+          data: {
+            lockedBalance: { decrement: totalLocked },
+            totalWithdrawn: { increment: totalLocked },
+            // ❌ لا تلمس availableBalance ولا withdrawableBalance
+          },
+        });
+      });
+
+      // إشعار المستخدم
+      await prisma.userNotification.create({
+        data: {
+          userId: tx.userId,
+          title: 'تمت معالجة طلب السحب 📤',
+          message: `تم تحويل مبلغ $${tx.amount} إلى محفظتك بنجاح.`,
+          type: 'withdrawal',
+          icon: 'arrow-up-right',
+          priority: 'HIGH',
+          actionUrl: '/dashboard',
+          isRead: false,
+        },
+      });
+
+      await updateUserBalances(tx.userId);
+
+      await logAdminAction({
+        adminId: session.admin.id,
+        action: 'approve_withdrawal',
+        targetType: 'transaction',
+        targetId: id,
+        details: { amount: tx.amount, userId: tx.userId, externalTxid },
+        ipAddress: ip,
+      });
+
+      return NextResponse.json({ success: true, action: 'approved' });
+    } else {
+      // ✅ رفض — أرجِع المبلغ كاملاً
+      await prisma.$transaction(async (prismaTx) => {
+        await prismaTx.transaction.update({
+          where: { id },
+          data: {
+            status: 'rejected',
+            reason: reason || 'تم الرفض من الإدارة',
+          },
+        });
+
+        await prismaTx.user.update({
+          where: { id: tx.userId },
+          data: {
+            lockedBalance: { decrement: totalLocked },
+            availableBalance: { increment: totalLocked },
+            withdrawableBalance: { increment: totalLocked },
+            // ❌ لا تلمس totalWithdrawn
+          },
+        });
+      });
+
+      // إشعار المستخدم
+      await prisma.userNotification.create({
+        data: {
+          userId: tx.userId,
+          title: 'تم رفض طلب السحب ❌',
+          message: `تم رفض طلب السحب بمبلغ $${tx.amount} وإعادة الرصيد لحسابك.`,
+          type: 'withdrawal',
+          icon: 'x-circle',
+          priority: 'HIGH',
+          actionUrl: '/dashboard',
+          isRead: false,
+        },
+      });
+
+      await updateUserBalances(tx.userId);
+
+      await logAdminAction({
+        adminId: session.admin.id,
+        action: 'reject_withdrawal',
+        targetType: 'transaction',
+        targetId: id,
+        details: { amount: tx.amount, reason },
+        ipAddress: ip,
+      });
+
+      return NextResponse.json({ success: true, action: 'rejected' });
+    }
+  } catch (error) {
+    console.error('Admin withdrawal action error:', error);
+    return NextResponse.json({ error: 'حدث خطأ' }, { status: 500 });
+  }
+}

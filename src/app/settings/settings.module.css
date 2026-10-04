@@ -1,0 +1,244 @@
+/* ============ NOTICE CARD ============ */
+.noticeCard {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, var(--warning-soft), transparent);
+  border: 1px solid rgba(245, 176, 65, 0.3);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  color: var(--warning);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.noticeCard svg {
+  flex-shrink: 0;
+}
+
+/* ============ PROFILE CARD ============ */
+.profileCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.profileInfo {
+  flex: 1;
+}
+
+.profileName {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.profileMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.metaDot {
+  margin: 0 2px;
+}
+
+/* ============ FIELDS GRID ============ */
+.fieldsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.fieldCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: all 0.2s ease;
+}
+
+.fieldCard:hover {
+  border-color: var(--border-default);
+  background: var(--bg-card-2);
+}
+
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+  cursor: default;
+}
+
+.fieldValue {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fieldInput {
+  flex: 1;
+  background: var(--bg-input);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: inherit;
+  cursor: default;
+  outline: none;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.fieldInput:focus {
+  border-color: var(--border-default);
+}
+
+.fieldInput.mono {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: var(--green-soft);
+  border: 1px solid var(--green);
+  border-radius: var(--radius-sm);
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+/* ============ INFO SECTION ============ */
+.infoSection {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+
+.infoTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.infoTitle svg {
+  color: var(--info);
+  flex-shrink: 0;
+}
+
+.infoList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.infoList li {
+  padding: 8px 0;
+  padding-right: 24px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  position: relative;
+}
+
+.infoList li:before {
+  content: '•';
+  position: absolute;
+  right: 12px;
+  color: var(--border-default);
+  font-weight: bold;
+}
+
+.infoList li:not(:last-child) {
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 768px) {
+  .profileCard {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .profileInfo {
+    text-align: center;
+  }
+
+  .profileMeta {
+    justify-content: center;
+  }
+
+  .fieldsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .noticeCard {
+    font-size: 12px;
+    padding: 12px 14px;
+  }
+}
+
+/* ============ DARK MODE ============ */
+@media (prefers-color-scheme: dark) {
+  .fieldInput {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .fieldCard:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+}
