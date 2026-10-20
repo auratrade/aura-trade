@@ -58,10 +58,9 @@ const copyToClipboard = async (text, type) => {
       const siteUrl = SITE_URL;
 
       const message =
-        `🎁 انضم إلى Aura Trade & Invest واحصل على مكافآت حصرية!\n\n` +
-        `🔑 كود الإحالة: ${referralCode}\n\n` +
-        `🔗 سجّل الآن من الرابط:\n${siteUrl}/register?ref=${referralCode}\n\n` +
-        `💎 مكافآت فورية • عمولات على 6 مستويات • سحب أرباح فوري`;
+  `انضم إلى Aura Trade & Invest\n` +
+  `كود الإحالة: ${referralCode}\n` +
+  `رابط التسجيل: ${siteUrl}/register?ref=${referralCode}`;
 
       await navigator.clipboard.writeText(message);
       toast.success('تم نسخ كود الإحالة مع الرابط والرسالة ✓');
