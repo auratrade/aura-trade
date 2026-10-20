@@ -48,36 +48,31 @@ export default function ReferralPanel() {
     }
   }
 
-  const SITE_URL = 'https://aura-trade-production.up.railway.app';
+  const copyToClipboard = async (text, type) => {
+    try {
+      if (type === 'code') {
+        const referralCode = stats?.referralCode || text;
+        const siteUrl = 'https://aura-trade-production.up.railway.app';
 
-const copyToClipboard = async (text, type) => {
-  try {
-    // ✅ عند نسخ الكود → انسخ رسالة دعوة كاملة
-    if (type === 'code') {
-      const referralCode = stats?.referralCode || text;
-      const siteUrl = SITE_URL;
+        const message =
+          `🎁 انضم إلى Aura Trade & Invest واحصل على مكافآت حصرية!\n\n` +
+          `🔑 كود الإحالة: ${referralCode}\n\n` +
+          `🔗 سجّل الآن من الرابط:\n${siteUrl}/register?ref=${referralCode}\n\n` +
+          `💎 مكافآت فورية • عمولات على 6 مستويات • سحب أرباح فوري`;
 
-      const message =
-        `🎁 انضم إلى Aura Trade & Invest واحصل على مكافآت حصرية!\n\n` +
-        `🔑 كود الإحالة: ${referralCode}\n\n` +
-        `🔗 سجّل الآن من الرابط:\n${siteUrl}/register?ref=${referralCode}\n\n` +
-        `💎 مكافآت فورية • عمولات على 6 مستويات • سحب أرباح فوري`;
-
-      await navigator.clipboard.writeText(message);
-      toast.success('تم نسخ كود الإحالة مع الرابط والرسالة ✓');
-    } else {
-      // ✅ عند نسخ الرابط → رابط فقط
-      await navigator.clipboard.writeText(text);
-      toast.success('تم نسخ الرابط');
+        await navigator.clipboard.writeText(message);
+        toast.success('تم نسخ كود الإحالة مع الرابط والرسالة ✓');
+      } else {
+        await navigator.clipboard.writeText(text);
+        toast.success('تم نسخ الرابط');
+      }
+      setCopied(type);
+      setTimeout(() => setCopied(''), 1500);
+    } catch (err) {
+      console.error('Copy error:', err);
+      toast.error('فشل النسخ، جرّب مرة أخرى');
     }
-
-    setCopied(type);
-    setTimeout(() => setCopied(''), 1500);
-  } catch (err) {
-    console.error('Copy error:', err);
-    toast.error('فشل النسخ، جرّب مرة أخرى');
-  }
-};
+  };
 
   const shareLink = async () => {
     const link = stats?.referralLink;
@@ -159,20 +154,42 @@ const copyToClipboard = async (text, type) => {
       <div className={styles.top}>
         <div className={styles.codeBox}>
           <div className={styles.label}>كود الإحالة</div>
+          
+          {/* الصف الأول: الكود مع زر النسخ (ينسخ الرسالة كاملة) */}
           <div className={styles.codeRow}>
             <div className={styles.code}>{stats.referralCode}</div>
             <button
               className={styles.copyMini}
-              onClick={() => copyToClipboard(stats.referralCode, 'code')}
-              title="نسخ الكود"
+              onClick={(e) => {
+                e.preventDefault();
+                copyToClipboard(stats.referralCode, 'code');
+              }}
+              title="نسخ الكود والرسالة"
             >
-              {copied === 'code' ? (
-                <Check size={14} className="text-green" />
-              ) : (
-                <Copy size={14} />
-              )}
+              {copied === 'code' ? <Check size={14} className="text-green" /> : <Copy size={14} />}
             </button>
           </div>
+
+          {/* الصف الثاني: الرابط المباشر مع زر النسخ (ينسخ الرابط فقط) */}
+         {/* الصف الثاني: رابط الموقع الثابت مع زر النسخ */}
+<div style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center',color: 'black', fontSize: '11px' }}>
+  <input
+    value="aura-trade-production.up.railway.app"
+    readOnly
+    className={`${styles.input} mono`}
+    style={{ flex: 1, fontSize: '11px', padding: '4px 8px', height: '30px' }}
+  />
+  <button
+    className={styles.copyMini}
+    onClick={(e) => {
+      e.preventDefault();
+      copyToClipboard('https://aura-trade-production.up.railway.app', 'link');
+    }}
+    title="نسخ رابط الموقع"
+  >
+    {copied === 'link' ? <Check size={14} className="text-green" /> : <Copy size={14} />}
+  </button>
+</div>
         </div>
 
         <div className={styles.stat}>
@@ -207,7 +224,7 @@ const copyToClipboard = async (text, type) => {
         </div>
       </div>
 
-      {/* ============ LINK ============ */}
+      {/* ============ LINK SECTION (الأسفل) ============ */}
       <div className={styles.linkSection}>
         <div className={styles.linkHead}>
           <Link2 size={14} />
