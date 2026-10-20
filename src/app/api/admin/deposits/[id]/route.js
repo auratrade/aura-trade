@@ -177,11 +177,25 @@ export async function POST(
           // هذه النقطة لا تحدث إلا بعد موافقة الإيداع.
           // ------------------------------------------------------
 
-          referralResult =
-            await activateReferral(
-              tx.userId,
-              prismaTx
-            );
+          // 1) تفعيل الإحالة (النظام القديم — لا تلمسه)
+referralResult = await activateReferral(
+  tx.userId,
+  prismaTx
+);
+
+// 2) ✅ جديد — توزيع العمولة على 6 مستويات
+try {
+  const commissions = await distributeCommissions(
+    tx.userId,
+    tx.amount,
+    tx.id,
+    prismaTx
+  );
+  console.log('💸 Commissions distributed:', commissions);
+} catch (err) {
+  // ⚠️ لا نُفشل الإيداع إذا فشلت العمولة
+  console.error('Commission distribution error:', err);
+}
         }
       );
 

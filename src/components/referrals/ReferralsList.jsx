@@ -48,12 +48,36 @@ export default function ReferralPanel() {
     }
   }
 
-  const copyToClipboard = (text, type) => {
-    navigator.clipboard?.writeText(text);
+  const SITE_URL = 'https://aura-trade-production.up.railway.app';
+
+const copyToClipboard = async (text, type) => {
+  try {
+    // ✅ عند نسخ الكود → انسخ رسالة دعوة كاملة
+    if (type === 'code') {
+      const referralCode = stats?.referralCode || text;
+      const siteUrl = SITE_URL;
+
+      const message =
+        `🎁 انضم إلى Aura Trade & Invest واحصل على مكافآت حصرية!\n\n` +
+        `🔑 كود الإحالة: ${referralCode}\n\n` +
+        `🔗 سجّل الآن من الرابط:\n${siteUrl}/register?ref=${referralCode}\n\n` +
+        `💎 مكافآت فورية • عمولات على 6 مستويات • سحب أرباح فوري`;
+
+      await navigator.clipboard.writeText(message);
+      toast.success('تم نسخ كود الإحالة مع الرابط والرسالة ✓');
+    } else {
+      // ✅ عند نسخ الرابط → رابط فقط
+      await navigator.clipboard.writeText(text);
+      toast.success('تم نسخ الرابط');
+    }
+
     setCopied(type);
-    toast.success(type === 'code' ? 'تم نسخ الكود' : 'تم نسخ الرابط');
     setTimeout(() => setCopied(''), 1500);
-  };
+  } catch (err) {
+    console.error('Copy error:', err);
+    toast.error('فشل النسخ، جرّب مرة أخرى');
+  }
+};
 
   const shareLink = async () => {
     const link = stats?.referralLink;

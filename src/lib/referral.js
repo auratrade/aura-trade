@@ -726,3 +726,133 @@ export async function getReferredUsers(
     take: limit,
   });
 }
+
+// ============================================================
+//       نظام العمولة من الإحالات (6 مستويات)
+// ============================================================
+
+/**
+ * نسبة العمولة لكل مستوى
+ * level 1 → 5%, level 2 → 10%, ..., level 6 → 30%
+ */
+export const COMMISSION_RATES = {
+  1: 0.05, // 5%
+  2: 0.10, // 10%
+  3: 0.15, // 15%
+  4: 0.20, // 20%
+  5: 0.25, // 25%
+  6: 0.30, // 30%
+};
+
+/**
+ * توزيع العمولة عند موافقة الأدمن على إيداع
+ *
+ * @param {string} depositorId - المستخدم الذي أودع
+ * @param {number} depositAmount - قيمة الإيداع
+ * @param {string} txId - ID معاملة الإيداع
+ * @param {Prisma.TransactionClient} tx - Prisma transaction
+ * @returns {Promise<Array>} - قائمة بالعمولات الموزعة
+ */
+export async function distributeCommissions(
+  depositorId,
+  depositAmount,
+  txId,
+  tx
+) {
+  const commissions = [];
+
+  // 1) جلب المستخدم المودِع + referredBy
+  let current = await tx.user.findUnique({
+    where: { id: depositorId },
+    select: { id: true, referredBy: true },
+  });
+
+  if (!current || !current.referredBy) {
+    return commissions; // لا يوجد مُحيل
+  }
+
+  // 2) الصعود في السلسلة حتى 6 مستويات
+  let level = 1;
+  let currentReferrerId = current.referredBy;
+  const visited = new Set([depositorId]); // منع الدوران اللانهائي
+
+  while (currentReferrerId && level <= 6) {
+    if (visited.has(currentReferrerId)) break; // منع الدورة
+    visited.add(currentReferrerId);
+
+    // 3) جلب المُحيل
+    const referrer = await tx.user.findUnique({
+      where: { id: currentReferrerId },
+      select: { id: true, username: true, referredBy: true },
+    });
+
+    if (!referrer) break;
+
+    // 4) حساب العمولة
+    const rate = COMMISSION_RATES[level];
+    const commission = parseFloat((depositAmount * rate).toFixed(2));
+
+    if (commission <= 0) break;
+
+    // 5) حفظ العمولة في جدول مستقل
+    await tx.referralCommission.create({
+      data: {
+        referrerId: referrer.id,
+        referredId: depositorId,
+        level,
+        rate,
+        depositAmount,
+        commission,
+        txId,
+      },
+    });
+
+    // 6) إضافة العمولة لرصيد المُحيل
+    await tx.user.update({
+      where: { id: referrer.id },
+      data: {
+        availableBalance: { increment: commission },
+        withdrawableBalance: { increment: commission }, // ✅ قابلة للسحب
+        totalProfit: { increment: commission },         // ✅ تُحسب كأرباح
+        totalCommissionEarned: { increment: commission }, // ✅ حقل جديد
+      },
+    });
+
+    // 7) إضافة earning record (للشفافية)
+    await tx.earning.create({
+      data: {
+        userId: referrer.id,
+        type: 'referral_commission',
+        amount: commission,
+        description: `عمولة إحالة مستوى ${level} (${(rate * 100).toFixed(0)}%) من إيداع $${depositAmount}`,
+      },
+    });
+
+    // 8) إشعار للمُحيل
+    await tx.userNotification.create({
+      data: {
+        userId: referrer.id,
+        type: 'referral',
+        title: `💰 عمولة إحالة جديدة`,
+        message: `حصلت على $${commission.toFixed(2)} عمولة مستوى ${level} من إيداع $${depositAmount.toFixed(2)}`,
+        icon: 'gift',
+        priority: 'normal',
+        actionUrl: '/referrals',
+      },
+    });
+
+    commissions.push({
+      level,
+      referrerId: referrer.id,
+      referrerUsername: referrer.username,
+      rate,
+      commission,
+    });
+
+    // 9) انتقل للمستوى الأعلى
+    currentReferrerId = referrer.referredBy;
+    level++;
+  }
+
+  return commissions;
+}

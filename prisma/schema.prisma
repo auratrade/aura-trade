@@ -58,6 +58,9 @@ model User {
   totalSalaryEarned     Float        @default(0)
   totalBonusEarned      Float        @default(0)
 
+  // ✅ جديد — نظام العمولة (6 مستويات)
+  totalCommissionEarned Float @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -67,6 +70,9 @@ model User {
   referralEarn   ReferralEarning[] @relation("ReferralEarner")
   referralBonuses ReferralBonus[]
   weeklySalaries  WeeklySalary[]
+
+  // ✅ جديد — العمولات التي حصل عليها هذا المستخدم
+  referralCommissions ReferralCommission[] @relation("CommissionEarner")
 
   // ✅ علاقة الإحالة الذاتية (حقلان فقط)
   referrer      User?  @relation("UserReferrals", fields: [referredBy], references: [id], onDelete: SetNull)
@@ -405,4 +411,26 @@ model IdentityVerification {
   @@index([status])
   @@index([userId])
   @@map("identity_verifications")
+}
+
+// ============================================================
+//         ReferralCommission (جديد — عمولة الإحالة)
+// ============================================================
+model ReferralCommission {
+  id          String   @id @default(uuid())
+  referrerId  String   // من حصل على العمولة
+  referrer    User     @relation("CommissionEarner", fields: [referrerId], references: [id], onDelete: Cascade)
+  referredId  String   // من أودع (المصدر)
+  level       Int      // 1-6
+  rate        Float    // النسبة المئوية (0.05 = 5%)
+  depositAmount Float  // قيمة الإيداع
+  commission  Float    // = depositAmount × rate
+  txId        String?  // ربط بمعاملة الإيداع
+  createdAt   DateTime @default(now())
+
+  @@index([referrerId])
+  @@index([referredId])
+  @@index([level])
+  @@index([createdAt])
+  @@map("referral_commissions")
 }
