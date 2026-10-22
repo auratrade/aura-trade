@@ -9,7 +9,7 @@ import { prisma } from '@/lib/prisma';
 
 import { updateUserBalances } from '@/lib/balance';
 
-import { activateReferral } from '@/lib/referral';
+import { activateReferral, distributeCommissions } from '@/lib/referral';
 
 // ============================================================
 // الموافقة / الرفض
