@@ -224,64 +224,9 @@ export default function ReferralPanel() {
         </div>
       </div>
 
-      {/* ============ LINK SECTION (الأسفل) ============ */}
-      <div className={styles.linkSection}>
-        <div className={styles.linkHead}>
-          <Link2 size={14} />
-          <span>رابط الإحالة الفريد</span>
-        </div>
-        <div className={styles.linkRow}>
-          <input
-            value={stats.referralLink}
-            readOnly
-            className={`${styles.input} mono`}
-          />
-          <button
-            className={styles.copyBtn}
-            onClick={() => copyToClipboard(stats.referralLink, 'link')}
-          >
-            {copied === 'link' ? <Check size={14} /> : <Copy size={14} />}
-            {copied === 'link' ? 'تم النسخ' : 'نسخ'}
-          </button>
-          <button className={styles.shareBtn} onClick={shareLink}>
-            <Share2 size={14} /> مشاركة
-          </button>
-        </div>
-        <div className={styles.linkHint}>
-          <ExternalLink size={11} />
-          شارك الرابط مع أصدقائك وسجّل أرباحاً من كل عملية يقومون بها
-        </div>
-      </div>
+     
 
-      {/* ============ نقل الأرباح ============ */}
-      <div className={styles.earningsBox}>
-        <div className={styles.earningsHead}>
-          <div className={styles.earningsIcon}>
-            <DollarSign size={18} />
-          </div>
-          <div className={styles.earningsInfo}>
-            <span>أرباح الإحالات القابلة للنقل</span>
-            <b className="mono">
-              ${stats.referralEarnings?.toFixed(2) || '0.00'}
-            </b>
-          </div>
-        </div>
-        <button
-          className={styles.transferBtn}
-          onClick={transferEarnings}
-          disabled={transferring || !stats.referralEarnings}
-        >
-          {transferring ? (
-            <>
-              <RefreshCw size={12} className={styles.spin} /> جاري النقل...
-            </>
-          ) : (
-            <>
-              <ArrowRightLeft size={12} /> نقل إلى المحفظة
-            </>
-          )}
-        </button>
-      </div>
+    
 
       {/* ============ PROGRESS ============ */}
       {nextLevel && (
