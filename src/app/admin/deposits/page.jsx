@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   ArrowDownToLine, RefreshCw, Eye, CheckCircle2, XCircle,
   Clock, DollarSign, User, Hash, ChevronRight, ChevronLeft,
-  AlertCircle, Filter
+  AlertCircle, Filter, Trash2 // ✅ أيقونة الحذف
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import TransactionDetail from '@/components/admin/TransactionDetail';
@@ -24,6 +24,17 @@ export default function AdminDepositsPage() {
   const [status, setStatus] = useState('pending');
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState(null);
+  
+  // ✅ حالة لحفظ الطلبات المحذوفة من الواجهة
+  const [hiddenIds, setHiddenIds] = useState([]);
+
+  // ✅ تحميل المحذوفين من localStorage عند فتح الصفحة
+  useEffect(() => {
+    const saved = localStorage.getItem('hidden_deposits');
+    if (saved) {
+      setHiddenIds(JSON.parse(saved));
+    }
+  }, []);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -47,6 +58,17 @@ export default function AdminDepositsPage() {
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // ✅ دالة الحذف من الواجهة (بدون تأثير على DB)
+  const handleHide = (id) => {
+    const updated = [...hiddenIds, id];
+    setHiddenIds(updated);
+    localStorage.setItem('hidden_deposits', JSON.stringify(updated));
+    toast.success('تم تجاهل الطلب من الواجهة (لم يتم تعديل قاعدة البيانات)');
+  };
+
+  // ✅ تصفية القائمة لاستبعاد المحذوفين
+  const visibleTransactions = transactions.filter(tx => !hiddenIds.includes(tx.id));
 
   const formatDate = (d) => {
     return new Date(d).toLocaleString('en-US', {
@@ -77,12 +99,28 @@ export default function AdminDepositsPage() {
             <ArrowDownToLine size={24} /> طلبات الإيداع
           </h1>
           <p className={styles.pageSubtitle}>
-            {pagination?.total || 0} طلب
+            {visibleTransactions.length} طلب (تم تجاهل {hiddenIds.length})
           </p>
         </div>
-        <button className={styles.refreshBtn} onClick={loadData}>
-          <RefreshCw size={14} className={loading ? styles.spin : ''} /> تحديث
-        </button>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {/* ✅ زر لاستعادة المحذوفين */}
+          {hiddenIds.length > 0 && (
+            <button 
+              className={styles.refreshBtn} 
+              onClick={() => {
+                if(confirm('هل تريد إعادة إظهار جميع الطلبات التي تم تجاهلها؟')) {
+                  setHiddenIds([]);
+                  localStorage.removeItem('hidden_deposits');
+                }
+              }}
+            >
+              استعادة المحذوفين
+            </button>
+          )}
+          <button className={styles.refreshBtn} onClick={loadData}>
+            <RefreshCw size={14} className={loading ? styles.spin : ''} /> تحديث
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -109,7 +147,7 @@ export default function AdminDepositsPage() {
             <RefreshCw size={20} className={styles.spin} />
             جاري التحميل...
           </div>
-        ) : transactions.length === 0 ? (
+        ) : visibleTransactions.length === 0 ? (
           <div className={styles.empty}>
             <ArrowDownToLine size={32} />
             <p>لا توجد طلبات {status === 'pending' ? 'معلّقة' : ''}</p>
@@ -128,7 +166,7 @@ export default function AdminDepositsPage() {
               </tr>
             </thead>
             <tbody>
-              {transactions.map((tx) => {
+              {visibleTransactions.map((tx) => {
                 const badge = getStatusBadge(tx.status);
                 const BadgeIcon = badge.icon;
                 return (
@@ -170,12 +208,23 @@ export default function AdminDepositsPage() {
                       <span className={styles.date}>{formatDate(tx.createdAt)}</span>
                     </td>
                     <td>
-                      <button
-                        className={styles.viewBtn}
-                        onClick={() => setSelected(tx)}
-                      >
-                        <Eye size={14} />
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          className={styles.viewBtn}
+                          onClick={() => setSelected(tx)}
+                        >
+                          <Eye size={14} />
+                        </button>
+                        {/* ✅ زر الحذف من الواجهة فقط */}
+                        <button
+                          className={styles.viewBtn}
+                          style={{ color: '#ea3943', borderColor: '#ea3943' }}
+                          onClick={() => handleHide(tx.id)}
+                          title="تجاهل الطلب من الواجهة"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

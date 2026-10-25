@@ -1,8 +1,8 @@
 import { prisma } from '../src/lib/prisma.js';
 
 // ✏️ عدّل هذه القيم
-const USERNAME = 'www1996';
-const AMOUNT = 6;
+const USERNAME = 'Mnbvcxy21';
+const AMOUNT = 3;
 const REASON = 'مكافأة من الإدارة';
 
 async function main() {
