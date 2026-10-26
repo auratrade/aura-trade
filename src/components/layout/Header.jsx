@@ -7,15 +7,15 @@ import {
   Bell, CheckCheck, Crown, Wallet, Info, Gift,
   LayoutDashboard, Target, ArrowDownToLine, ArrowUpFromLine,
   Users, Shield, Moon, Sun, User, X, LogOut,
-  MoreHorizontal, Settings, BadgeCheck
+  MoreHorizontal, Settings, BadgeCheck,
+  Send // ✅ تم إضافة أيقونة تيليجرام
 } from 'lucide-react';
 import { useTheme } from '@/context/ThemeContext';
 import styles from './Header.module.css';
 import { useToast } from '@/context/ToastContext';
 import { useConfirm } from '@/context/ConfirmContext';
-import VerifiedBadge from '@/components/common/VerifiedBadge';
 
-// ============ روابط التنقل الأساسية (تظهر في الأسفل) ============
+// ============ روابط التنقل الأساسية ============
 const PRIMARY_LINKS = [
   { href: '/dashboard', label: 'الرئيسية', icon: LayoutDashboard },
   { href: '/missions', label: 'المهام', icon: Target },
@@ -148,7 +148,6 @@ export default function Header() {
     }
   }
 
-  // فحص صارم: يكون الحساب موثقاً فقط في حال كانت الحالة approved أو isVerified تساوي true
   const isVerifiedUser = Boolean(
     user?.isVerified === true ||
     user?.kycStatus === 'approved' ||
@@ -157,7 +156,6 @@ export default function Header() {
 
   return (
     <>
-      {/* ============ Bottom Navigation Bar ============ */}
       <nav className={styles.bottomNav}>
         <div className={styles.navInner}>
           {/* ============ PRIMARY LINKS ============ */}
@@ -210,6 +208,20 @@ export default function Header() {
               </div>
             )}
           </div>
+
+          {/* ✅ ============ TELEGRAM CHANNEL ============ */}
+          <a
+            href="https://t.me/auratrade00"
+            target="_blank"
+            rel="noopener noreferrer"
+            className={styles.navItem}
+            title="قناة تيليجرام"
+          >
+            <div className={styles.navIconWrap}>
+              <Send size={20} />
+            </div>
+            <span className={styles.navLabel}>القناة</span>
+          </a>
 
           {/* ============ NOTIFICATIONS ============ */}
           <div className={styles.dropdownWrap} ref={notifRef}>
@@ -311,8 +323,8 @@ export default function Header() {
                 {user?.username?.slice(0, 2).toUpperCase() || 'AV'}
               </div>
               <span className={styles.navLabel}>
-  {user?.username?.slice(0, 8) || 'حسابي'}
-</span>
+                {user?.username?.slice(0, 8) || 'حسابي'}
+              </span>
             </button>
 
             {showUser && (
@@ -322,10 +334,9 @@ export default function Header() {
                     {user?.username?.slice(0, 2).toUpperCase() || 'AV'}
                   </div>
                   <div>
-                    {/* إظهار علامة التوثيق فقط بجانب اسم المستخدم الموثق */}
-                   <div className={styles.userHeadName}>
-  {user?.fullName || user?.username || 'مستخدم'}
-</div>
+                    <div className={styles.userHeadName}>
+                      {user?.fullName || user?.username || 'مستخدم'}
+                    </div>
                     <div className={styles.userHeadRole}>
                       {user?.accountLevel === 0 && 'مبتدئ'}
                       {user?.accountLevel === 1 && 'مستوى 1'}
@@ -335,25 +346,23 @@ export default function Header() {
                   </div>
                 </div>
 
-{/* اعرض زر التوثيق فقط إذا لم يكن المستخدم موثقاً */}
-{!user?.isVerified && (
-  <Link
-    href="/verify-identity"
-    className={styles.dropdownItem}
-    onClick={() => setShowUser(false)}
-  >
-    <BadgeCheck size={14} />
-    توثيق الحساب
-  </Link>
-)}
+                {!user?.isVerified && (
+                  <Link
+                    href="/verify-identity"
+                    className={styles.dropdownItem}
+                    onClick={() => setShowUser(false)}
+                  >
+                    <BadgeCheck size={14} />
+                    توثيق الحساب
+                  </Link>
+                )}
 
-{/* إذا كان موثقاً، اعرض بادج أخضر فقط */}
-{user?.isVerified && (
-  <div className={styles.dropdownItem} style={{ cursor: 'default', opacity: 0.7 }}>
-    <BadgeCheck size={14} style={{ color: '#10b981' }} />
-    <span>حساب موثق ✓</span>
-  </div>
-)}
+                {user?.isVerified && (
+                  <div className={styles.dropdownItem} style={{ cursor: 'default', opacity: 0.7 }}>
+                    <BadgeCheck size={14} style={{ color: '#10b981' }} />
+                    <span>حساب موثق ✓</span>
+                  </div>
+                )}
 
                 <Link
                   href="/settings"

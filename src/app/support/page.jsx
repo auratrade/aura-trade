@@ -1,13 +1,14 @@
 import {
   MessageCircle, Clock, Headphones,
-  Send, Shield, CheckCircle2, ArrowLeft
+  Send, Shield, CheckCircle2, ArrowLeft,
+  Users // أيقونة القناة
 } from 'lucide-react';
 import Link from 'next/link';
 import styles from './support.module.css';
 
 export const metadata = {
   title: 'خدمة العملاء | AURA TRADE & INVEST',
-  description: 'تواصل مع فريق خدمة عملاء AURA TRADE & INVEST عبر بوت تيليجرام',
+  description: 'تواصل مع فريق خدمة عملاء AURA TRADE & INVEST عبر قناة أو بوت تيليجرام',
 };
 
 const CONTACT_METHODS = [
@@ -18,6 +19,14 @@ const CONTACT_METHODS = [
     link: 'https://t.me/auratrade77_bot',
     desc: 'تواصل مباشر مع خدمة العملاء 24/7',
     color: '#22d3ee',
+  },
+  {
+    icon: Users, // استخدام أيقونة المجموعة للقناة
+    title: 'قناة تيليجرام',
+    value: '@auratrade00',
+    link: 'https://t.me/auratrade00',
+    desc: 'انضم إلى قناتنا الرسمية للتحديثات والإعلانات',
+    color: '#8b5cf6', // لون مختلف للتمييز
   },
 ];
 
@@ -54,7 +63,7 @@ export default function SupportPage() {
           <h1 className={styles.heroTitle}>خدمة العملاء</h1>
           <p className={styles.heroDesc}>
             فريق AURA TRADE & INVEST جاهز لمساعدتك على مدار الساعة.
-            تواصل معنا عبر بوت تيليجرام الرسمي.
+            تواصل معنا عبر قناتنا أو بوت تيليجرام الرسمي.
           </p>
         </div>
 
@@ -93,8 +102,6 @@ export default function SupportPage() {
             <h2 className={styles.sectionTitle}>ساعات العمل</h2>
           </div>
           <div className={styles.hoursGrid}>
-           
-           
             <div className={`${styles.hoursCard} ${styles.activeNow}`}>
               <span className={styles.hoursDay}>
                 <span className={styles.dot} />
@@ -129,16 +136,16 @@ export default function SupportPage() {
           <CheckCircle2 size={24} className="text-green" />
           <div>
             <b>لم تجد ما تبحث عنه؟</b>
-            <span>راسلنا على بوت تيليجرام وسنكون سعداء بمساعدتك.</span>
+            <span>انضم إلى قناتنا أو راسلنا على البوت وسنكون سعداء بمساعدتك.</span>
           </div>
           <a
-            href="https://t.me/auratrade77_bot"
+            href="https://t.me/auratrade00"
             target="_blank"
             rel="noopener noreferrer"
             className={styles.ctaBtn}
           >
-            <Send size={14} />
-            فتح البوت
+            <Users size={14} />
+            انضم للقناة
           </a>
         </div>
 
