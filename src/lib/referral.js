@@ -185,11 +185,6 @@ export async function activateReferral(
   }
 
   // 2️⃣ نحاول حجز الإحالة بشكل ذري
-  //
-  // إذا كان هناك طلبان بنفس الوقت، واحد فقط
-  // يستطيع تغيير activatedAt من null إلى تاريخ.
-  //
-  // هذا يمنع احتساب نفس الإحالة مرتين.
   const claim = await tx.referralRelation.updateMany({
     where: {
       id: relation.id,
@@ -207,7 +202,7 @@ export async function activateReferral(
     };
   }
 
-  // 3️⃣ جلب بيانات المُحيل بعد حجز الإحالة
+  // 3️⃣ جلب بيانات المُحيل المباشر (✅ تم التأكد من وجود هذا الجزء)
   const referrer = await tx.user.findUnique({
     where: {
       id: relation.referrerId,
@@ -221,6 +216,7 @@ export async function activateReferral(
       totalReferrals: true,
       availableBalance: true,
       withdrawableBalance: true,
+      referredBy: true, // ✅ مهم للصعود في السلسلة
     },
   });
 
@@ -240,10 +236,9 @@ export async function activateReferral(
     newCount
   );
 
-  const tierChanged =
-    oldTier.key !== newTier.key;
+  const tierChanged = oldTier.key !== newTier.key;
 
-  // 6️⃣ تحديث إحصائيات المُحيل
+  // 6️⃣ تحديث إحصائيات المُحيل المباشر
   await tx.user.update({
     where: {
       id: referrer.id,
@@ -256,16 +251,39 @@ export async function activateReferral(
   });
 
   // ============================================================
+  // 6.1 ✅ تحديث العدّ لكل من هو أعلى في السلسلة (بدون عمولة)
+  // ============================================================
+  let currentReferrerId = referrer.referredBy;
+  const visited = new Set([referrer.id]); // منع الدوران اللانهائي
+
+  while (currentReferrerId) {
+    if (visited.has(currentReferrerId)) break;
+    visited.add(currentReferrerId);
+
+    // زيادة رقم الإحالة فقط (لا نغير المستوى أو نضيف مكافآت)
+    await tx.user.update({
+      where: { id: currentReferrerId },
+      data: {
+        referralCount: { increment: 1 },
+        totalReferrals: { increment: 1 },
+      },
+    });
+
+    // الانتقال للمستوى الأعلى
+    const currentUser = await tx.user.findUnique({
+      where: { id: currentReferrerId },
+      select: { referredBy: true },
+    });
+    currentReferrerId = currentUser?.referredBy || null;
+  }
+
+  // ============================================================
   // 7️⃣ مكافأة الترقية
   // ============================================================
 
   let bonusAdded = 0;
 
-  if (
-    tierChanged &&
-    newTier.bonus > 0
-  ) {
-    // إنشاء سجل المكافأة
+  if (tierChanged && newTier.bonus > 0) {
     await tx.referralBonus.upsert({
       where: {
         userId_tier: {
@@ -284,7 +302,6 @@ export async function activateReferral(
       },
     });
 
-    // إضافة المكافأة إلى الرصيد
     await tx.user.update({
       where: {
         id: referrer.id,
@@ -293,26 +310,21 @@ export async function activateReferral(
         availableBalance: {
           increment: newTier.bonus,
         },
-
         withdrawableBalance: {
           increment: newTier.bonus,
         },
-
         totalProfit: {
           increment: newTier.bonus,
         },
-
         totalBonusEarned: {
           increment: newTier.bonus,
         },
-
         totalValue: {
           increment: newTier.bonus,
         },
       },
     });
 
-    // تسجيل الربح
     await tx.earning.create({
       data: {
         userId: referrer.id,
@@ -324,7 +336,6 @@ export async function activateReferral(
 
     bonusAdded = newTier.bonus;
 
-    // إشعار الترقية
     await createNotification(
       {
         userId: referrer.id,
@@ -343,41 +354,23 @@ export async function activateReferral(
   // 8️⃣ فتح شرط الراتب
   // ============================================================
 
-  if (
-    newTier.salaryLocked &&
-    canWithdrawSalary(
-      newCount,
-      newTier
-    )
-  ) {
+  if (newTier.salaryLocked && canWithdrawSalary(newCount, newTier)) {
     const existing = await tx.user.findUnique({
-      where: {
-        id: referrer.id,
-      },
-      select: {
-        weeklySalaryUnlockedAt: true,
-      },
+      where: { id: referrer.id },
+      select: { weeklySalaryUnlockedAt: true },
     });
 
-    if (
-      !existing.weeklySalaryUnlockedAt
-    ) {
+    if (!existing.weeklySalaryUnlockedAt) {
       await tx.user.update({
-        where: {
-          id: referrer.id,
-        },
-        data: {
-          weeklySalaryUnlockedAt:
-            new Date(),
-        },
+        where: { id: referrer.id },
+        data: { weeklySalaryUnlockedAt: new Date() },
       });
 
       await createNotification(
         {
           userId: referrer.id,
           type: 'salary_unlock',
-          title:
-            '💰 تم تفعيل راتبك الأسبوعي!',
+          title: '💰 تم تفعيل راتبك الأسبوعي!',
           message: `مبروك! يمكنك الآن سحب راتبك الأسبوعي بقيمة $${newTier.weeklySalary} USDT. الراتب يُصرف كل 7 أيام.`,
           icon: 'wallet',
           priority: 'high',
@@ -392,27 +385,17 @@ export async function activateReferral(
   // 9️⃣ إشعار الراتب عند الترقية
   // ============================================================
 
-  if (
-    tierChanged &&
-    newTier.weeklySalary > 0
-  ) {
+  if (tierChanged && newTier.weeklySalary > 0) {
     if (newTier.salaryLocked) {
-      const unlockAt =
-        newTier.minReferrals +
-        newTier.salaryUnlockExtra;
-
-      const remaining = Math.max(
-        0,
-        unlockAt - newCount
-      );
+      const unlockAt = newTier.minReferrals + newTier.salaryUnlockExtra;
+      const remaining = Math.max(0, unlockAt - newCount);
 
       if (remaining > 0) {
         await createNotification(
           {
             userId: referrer.id,
             type: 'salary_info',
-            title:
-              '📢 معلومة عن راتبك الأسبوعي',
+            title: '📢 معلومة عن راتبك الأسبوعي',
             message: `راتبك الأسبوعي هو $${newTier.weeklySalary} USDT. لتفعيل السحب، يجب أن تصل إلى ${unlockAt} إحالة (باقي ${remaining} إحالة).`,
             icon: 'info',
             priority: 'normal',
@@ -426,8 +409,7 @@ export async function activateReferral(
         {
           userId: referrer.id,
           type: 'salary_info',
-          title:
-            '💰 راتبك الأسبوعي جاهز!',
+          title: '💰 راتبك الأسبوعي جاهز!',
           message: `راتبك الأسبوعي $${newTier.weeklySalary} USDT قابل للسحب الآن. الراتب يُصرف كل 7 أيام.`,
           icon: 'wallet',
           priority: 'high',
@@ -762,97 +744,77 @@ export async function distributeCommissions(
   const commissions = [];
 
   // 1) جلب المستخدم المودِع + referredBy
-  let current = await tx.user.findUnique({
+  const depositor = await tx.user.findUnique({
     where: { id: depositorId },
     select: { id: true, referredBy: true },
   });
 
-  if (!current || !current.referredBy) {
-    return commissions; // لا يوجد مُحيل
+  if (!depositor || !depositor.referredBy) {
+    return commissions; // لا يوجد مُحيل مباشر
   }
 
-  // 2) الصعود في السلسلة حتى 6 مستويات
-  let level = 1;
-  let currentReferrerId = current.referredBy;
-  const visited = new Set([depositorId]); // منع الدوران اللانهائي
+  // 2) جلب المُحيل المباشر فقط (المستوى الأول)
+  const referrer = await tx.user.findUnique({
+    where: { id: depositor.referredBy },
+    select: { id: true, username: true },
+  });
 
-  while (currentReferrerId && level <= 6) {
-    if (visited.has(currentReferrerId)) break; // منع الدورة
-    visited.add(currentReferrerId);
+  if (!referrer) return commissions;
 
-    // 3) جلب المُحيل
-    const referrer = await tx.user.findUnique({
-      where: { id: currentReferrerId },
-      select: { id: true, username: true, referredBy: true },
-    });
+  // 3) حساب العمولة (5% فقط للمستوى الأول)
+  const rate = 0.05;
+  const commission = parseFloat((depositAmount * rate).toFixed(2));
 
-    if (!referrer) break;
+  if (commission <= 0) return commissions;
 
-    // 4) حساب العمولة
-    const rate = COMMISSION_RATES[level];
-    const commission = parseFloat((depositAmount * rate).toFixed(2));
-
-    if (commission <= 0) break;
-
-    // 5) حفظ العمولة في جدول مستقل
-    await tx.referralCommission.create({
-      data: {
-        referrerId: referrer.id,
-        referredId: depositorId,
-        level,
-        rate,
-        depositAmount,
-        commission,
-        txId,
-      },
-    });
-
-    // 6) إضافة العمولة لرصيد المُحيل
-    await tx.user.update({
-      where: { id: referrer.id },
-      data: {
-        availableBalance: { increment: commission },
-        withdrawableBalance: { increment: commission }, // ✅ قابلة للسحب
-        totalProfit: { increment: commission },         // ✅ تُحسب كأرباح
-        totalCommissionEarned: { increment: commission }, // ✅ حقل جديد
-      },
-    });
-
-    // 7) إضافة earning record (للشفافية)
-    await tx.earning.create({
-      data: {
-        userId: referrer.id,
-        type: 'referral_commission',
-        amount: commission,
-        description: `عمولة إحالة مستوى ${level} (${(rate * 100).toFixed(0)}%) من إيداع $${depositAmount}`,
-      },
-    });
-
-    // 8) إشعار للمُحيل
-    await tx.userNotification.create({
-      data: {
-        userId: referrer.id,
-        type: 'referral',
-        title: `💰 عمولة إحالة جديدة`,
-        message: `حصلت على $${commission.toFixed(2)} عمولة مستوى ${level} من إيداع $${depositAmount.toFixed(2)}`,
-        icon: 'gift',
-        priority: 'normal',
-        actionUrl: '/referrals',
-      },
-    });
-
-    commissions.push({
-      level,
+  // 4) حفظ السجل
+  await tx.referralCommission.create({
+    data: {
       referrerId: referrer.id,
-      referrerUsername: referrer.username,
+      referredId: depositorId,
+      level: 1,
       rate,
+      depositAmount,
       commission,
-    });
+      txId,
+    },
+  });
 
-    // 9) انتقل للمستوى الأعلى
-    currentReferrerId = referrer.referredBy;
-    level++;
-  }
+  // 5) إضافة الرصيد للمُحيل
+  await tx.user.update({
+    where: { id: referrer.id },
+    data: {
+      availableBalance: { increment: commission },
+      withdrawableBalance: { increment: commission },
+      totalProfit: { increment: commission },
+      totalCommissionEarned: { increment: commission },
+    },
+  });
+
+  // 6) سجل Earning
+  await tx.earning.create({
+    data: {
+      userId: referrer.id,
+      type: 'referral_commission',
+      amount: commission,
+      description: `عمولة إحالة مباشرة (5%) من إيداع $${depositAmount}`,
+    },
+  });
+
+  // 7) إشعار
+  await tx.userNotification.create({
+    data: {
+      userId: referrer.id,
+      type: 'referral',
+      title: `💰 عمولة إحالة جديدة`,
+      message: `حصلت على $${commission.toFixed(2)} عمولة من إيداع $${depositAmount.toFixed(2)}`,
+      icon: 'gift',
+      priority: 'normal',
+      actionUrl: '/referrals',
+    },
+  });
+
+  commissions.push({ level: 1, referrerId: referrer.id, commission });
 
   return commissions;
 }
